@@ -17,6 +17,7 @@
  * Author:  Andrew Christian
  *          28 May 2002
  */
+#define CONFIG_MMC_BLOCK_MINORS 8
 #include <linux/moduleparam.h>
 #include <linux/module.h>
 #include <linux/init.h>
