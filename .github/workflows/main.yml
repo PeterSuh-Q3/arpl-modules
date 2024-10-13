@@ -16,8 +16,8 @@ jobs:
         run: |
           #curl -kL https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/epyc7002-7.1-5.10.55.tgz -o /tmp/epyc7002-7.1-5.10.55.tgz
           #curl -kL https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/epyc7002-7.2-5.10.55.tgz -o /tmp/epyc7002-7.2-5.10.55.tgz
-          ls -d *-*/ | grep -v -e braswell -e broadwellnkv2 -e broadwellntbap -e purley
-          for D in `ls -d *-*/ | grep -v -e braswell -e broadwellnkv2 -e broadwellntbap -e purley`; do
+          ls -d *-*/ | grep -v -e bromolow -e braswell -e broadwellnkv2 -e broadwellntbap -e purley
+          for D in `ls -d *-*/ | grep -v -e bromolow -e braswell -e broadwellnkv2 -e broadwellntbap -e purley`; do
             E=$(echo ${D} | sed 's#/##')
               echo "backup ${E} tcrp modules"
               for file in "$E"/*.ko; do
