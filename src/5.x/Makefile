@@ -4,5 +4,5 @@ obj-y += block/
 obj-y += drivers/
 obj-y += lib/
 obj-y += mm/
-obj-y	+= mmc/
-#obj-y += virt/
+#obj-y  += mmc/
+#obj-y  += virt/
