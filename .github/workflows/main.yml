@@ -14,9 +14,7 @@ jobs:
 
       - name: Tar modules
         run: |
-          #curl -kL https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/epyc7002-7.1-5.10.55.tgz -o /tmp/epyc7002-7.1-5.10.55.tgz
-          #curl -kL https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/epyc7002-7.2-5.10.55.tgz -o /tmp/epyc7002-7.2-5.10.55.tgz
-          ls -d *-*/ | grep -v -e bromolow -e braswell -e broadwellnkv2 -e broadwellntbap -e purley
+          ls -d *-*/ | grep -v -e bromolow -e braswell -e broadwellnkv2 -e broadwellntbap -e purley -e epyc7002
           for D in `ls -d *-*/ | grep -v -e bromolow -e braswell -e broadwellnkv2 -e broadwellntbap -e purley`; do
             E=$(echo ${D} | sed 's#/##')
               echo "backup ${E} tcrp modules"
@@ -47,11 +45,11 @@ jobs:
             sha256sum ./${E}.tgz | awk '{print $1}' | awk '{print $1 " '${E}.tgz' modpack.sha256"}' >> files-chksum
           done
 
-          #echo "download latest epyc7002 module pack"
-          #curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/epyc7002-7.1-5.10.55.tgz
-          #curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/epyc7002-7.2-5.10.55.tgz
-          #sha256sum ./epyc7002-7.1-5.10.55.tgz | awk '{print $1}' | awk '{print $1 " 'epyc7002-7.1-5.10.55.tgz' modpack.sha256"}' >> files-chksum
-          #sha256sum ./epyc7002-7.2-5.10.55.tgz | awk '{print $1}' | awk '{print $1 " 'epyc7002-7.2-5.10.55.tgz' modpack.sha256"}' >> files-chksum
+          echo "download latest epyc7002 module pack(from rr-modules 24.10.1)"
+          curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/epyc7002-7.1-5.10.55.tgz
+          curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/epyc7002-7.2-5.10.55.tgz
+          sha256sum ./epyc7002-7.1-5.10.55.tgz | awk '{print $1}' | awk '{print $1 " 'epyc7002-7.1-5.10.55.tgz' modpack.sha256"}' >> files-chksum
+          sha256sum ./epyc7002-7.2-5.10.55.tgz | awk '{print $1}' | awk '{print $1 " 'epyc7002-7.2-5.10.55.tgz' modpack.sha256"}' >> files-chksum
 
           echo "download latest firmware.tgz"
           curl -kL https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/firmware.tgz -o /tmp/firmware.tgz
@@ -74,9 +72,9 @@ jobs:
           files: |
             *.tgz, files-chksum
 
-      #- name: Trigger Workflow in Another Repository
-      #  uses: peter-evans/repository-dispatch@v1
-      #  with:
-      #    token: ${{ secrets.ACCESS_TOKEN }}
-      #    repository: PeterSuh-Q3/tcrp-modules
-      #    event-type: trigger-workflow
+      - name: Trigger Workflow in Another Repository
+        uses: peter-evans/repository-dispatch@v1
+        with:
+          token: ${{ secrets.ACCESS_TOKEN }}
+          repository: PeterSuh-Q3/tcrp-modules
+          event-type: trigger-workflow
