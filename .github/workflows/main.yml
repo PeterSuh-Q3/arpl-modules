@@ -45,13 +45,15 @@ jobs:
             sha256sum ./${E}.tgz | awk '{print $1}' | awk '{print $1 " '${E}.tgz' modpack.sha256"}' >> files-chksum
           done
 
-          echo "download latest epyc7002 module pack(from rr-modules 24.10.1)"
+          echo "download latest bromolow,epyc7002 module pack(simple copy from rr-modules 24.10.1)"
+          curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/bromolow-3.10.108.tgz
           curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/epyc7002-7.1-5.10.55.tgz
           curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/epyc7002-7.2-5.10.55.tgz
+          sha256sum ./bromolow-3.10.108.tgz    | awk '{print $1}' | awk '{print $1 " 'bromolow-3.10.108.tgz'    modpack.sha256"}' >> files-chksum
           sha256sum ./epyc7002-7.1-5.10.55.tgz | awk '{print $1}' | awk '{print $1 " 'epyc7002-7.1-5.10.55.tgz' modpack.sha256"}' >> files-chksum
           sha256sum ./epyc7002-7.2-5.10.55.tgz | awk '{print $1}' | awk '{print $1 " 'epyc7002-7.2-5.10.55.tgz' modpack.sha256"}' >> files-chksum
 
-          echo "download latest firmware.tgz"
+          echo "download latest firmware.tgz(simple copy)"
           curl -kL https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/firmware.tgz -o /tmp/firmware.tgz
           echo "extract latest firmware.tgz"
           [ ! -d ./firmware/ ] && mkdir ./firmware/
