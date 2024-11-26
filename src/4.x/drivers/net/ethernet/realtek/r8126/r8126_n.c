@@ -98,6 +98,32 @@
 #define FIRMWARE_8126A_2	"rtl_nic/rtl8126a-2.fw"
 #define FIRMWARE_8126A_3	"rtl_nic/rtl8126a-3.fw"
 
+static const char *phy_speed_to_str(int speed)
+{
+    switch (speed) {
+    case SPEED_10:
+        return "10Mbps";
+    case SPEED_100:
+        return "100Mbps";
+    case SPEED_1000:
+        return "1Gbps";
+    default:
+        return "Unknown";
+    }
+}
+
+static const char *phy_duplex_to_str(unsigned int duplex)
+{
+    switch (duplex) {
+    case DUPLEX_HALF:
+        return "Half";
+    case DUPLEX_FULL:
+        return "Full";
+    default:
+        return "Unknown";
+    }
+}
+
 static const struct {
         const char *name;
         const char *fw_name;
