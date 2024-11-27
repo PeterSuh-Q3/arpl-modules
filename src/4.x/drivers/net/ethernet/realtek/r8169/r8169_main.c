@@ -30,7 +30,7 @@
 #include <linux/ipv6.h>
 #include <asm/unaligned.h>
 #include <net/ip6_checksum.h>
-#include <net/netdev_queues.h>
+#include "netdev_queues.h"
 
 #include "r8169.h"
 #include "r8169_firmware.h"
