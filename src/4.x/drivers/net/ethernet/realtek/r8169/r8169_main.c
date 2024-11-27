@@ -25,7 +25,7 @@
 #include <linux/interrupt.h>
 #include <linux/dma-mapping.h>
 #include <linux/pm_runtime.h>
-#include <linux/bitfield.h>
+#include "bitfield.h"
 #include <linux/prefetch.h>
 #include <linux/ipv6.h>
 #include <asm/unaligned.h>
