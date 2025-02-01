@@ -61,7 +61,7 @@ static twa_message_type twa_aen_table[] = {
 	{0x0000, "AEN queue empty"},
 	{0x0001, "Controller reset occurred"},
 	{0x0002, "Degraded unit detected"},
-	{0x0003, "Controller error occured"},
+	{0x0003, "Controller error occurred"},
 	{0x0004, "Background rebuild failed"},
 	{0x0005, "Background rebuild done"},
 	{0x0006, "Incomplete unit detected"},
@@ -323,11 +323,6 @@ static twa_message_type twa_error_table[] = {
 #define TW_CURRENT_DRIVER_SRL 35
 #define TW_CURRENT_DRIVER_BUILD 0
 #define TW_CURRENT_DRIVER_BRANCH 0
-
-/* Phase defines */
-#define TW_PHASE_INITIAL 0
-#define TW_PHASE_SINGLE  1
-#define TW_PHASE_SGLIST  2
 
 /* Misc defines */
 #define TW_9550SX_DRAIN_COMPLETED	      0xFFFF
