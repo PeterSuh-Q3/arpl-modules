@@ -5,7 +5,7 @@
 # r8168 is the Linux device driver released for Realtek Gigabit Ethernet
 # controllers with PCI-Express interface.
 #
-# Copyright(c) 2023 Realtek Semiconductor Corp. All rights reserved.
+# Copyright(c) 2024 Realtek Semiconductor Corp. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the Free
@@ -48,6 +48,143 @@
 #define RTL_USE_NEW_INTR_API
 #endif
 */
+
+#ifndef fallthrough
+#define fallthrough
+#endif
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3,3,0)
+#define netif_xmit_stopped netif_tx_queue_stopped
+#endif /* LINUX_VERSION_CODE < KERNEL_VERSION(3,3,0) */
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3,7,0)
+#ifndef MDIO_AN_EEE_ADV_100TX
+#define MDIO_AN_EEE_ADV_100TX	0x0002	/* Advertise 100TX EEE cap */
+#endif
+#ifndef MDIO_AN_EEE_ADV_1000T
+#define MDIO_AN_EEE_ADV_1000T	0x0004	/* Advertise 1000T EEE cap */
+#endif
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3,6,0)
+#define MDIO_EEE_100TX		MDIO_AN_EEE_ADV_100TX	/* 100TX EEE cap */
+#define MDIO_EEE_1000T		MDIO_AN_EEE_ADV_1000T	/* 1000T EEE cap */
+#define MDIO_EEE_10GT		0x0008	/* 10GT EEE cap */
+#define MDIO_EEE_1000KX		0x0010	/* 1000KX EEE cap */
+#define MDIO_EEE_10GKX4		0x0020	/* 10G KX4 EEE cap */
+#define MDIO_EEE_10GKR		0x0040	/* 10G KR EEE cap */
+#endif /* LINUX_VERSION_CODE < KERNEL_VERSION(3,6,0) */
+
+static inline u32 mmd_eee_adv_to_ethtool_adv_t(u16 eee_adv)
+{
+        u32 adv = 0;
+
+        if (eee_adv & MDIO_EEE_100TX)
+                adv |= ADVERTISED_100baseT_Full;
+        if (eee_adv & MDIO_EEE_1000T)
+                adv |= ADVERTISED_1000baseT_Full;
+        if (eee_adv & MDIO_EEE_10GT)
+                adv |= ADVERTISED_10000baseT_Full;
+        if (eee_adv & MDIO_EEE_1000KX)
+                adv |= ADVERTISED_1000baseKX_Full;
+        if (eee_adv & MDIO_EEE_10GKX4)
+                adv |= ADVERTISED_10000baseKX4_Full;
+        if (eee_adv & MDIO_EEE_10GKR)
+                adv |= ADVERTISED_10000baseKR_Full;
+
+        return adv;
+}
+
+static inline u16 ethtool_adv_to_mmd_eee_adv_t(u32 adv)
+{
+        u16 reg = 0;
+
+        if (adv & ADVERTISED_100baseT_Full)
+                reg |= MDIO_EEE_100TX;
+        if (adv & ADVERTISED_1000baseT_Full)
+                reg |= MDIO_EEE_1000T;
+        if (adv & ADVERTISED_10000baseT_Full)
+                reg |= MDIO_EEE_10GT;
+        if (adv & ADVERTISED_1000baseKX_Full)
+                reg |= MDIO_EEE_1000KX;
+        if (adv & ADVERTISED_10000baseKX4_Full)
+                reg |= MDIO_EEE_10GKX4;
+        if (adv & ADVERTISED_10000baseKR_Full)
+                reg |= MDIO_EEE_10GKR;
+
+        return reg;
+}
+#endif /* LINUX_VERSION_CODE < KERNEL_VERSION(3,7,0) */
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,3,0)
+static inline
+ssize_t strscpy(char *dest, const char *src, size_t count)
+{
+        long res = 0;
+
+        if (count == 0)
+                return -E2BIG;
+
+        while (count) {
+                char c;
+
+                c = src[res];
+                dest[res] = c;
+                if (!c)
+                        return res;
+                res++;
+                count--;
+        }
+
+        /* Hit buffer length without finding a NUL; force NUL-termination. */
+        if (res)
+                dest[res-1] = '\0';
+
+        return -E2BIG;
+}
+#endif
+
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(4,6,0))
+static inline unsigned char *skb_checksum_start(const struct sk_buff *skb)
+{
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22))
+        return skb->head + skb->csum_start;
+#else /* < 2.6.22 */
+        return skb_transport_header(skb);
+#endif
+}
+#endif
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3,3,0)
+static inline void netdev_tx_sent_queue(struct netdev_queue *dev_queue,
+                                        unsigned int bytes)
+{}
+static inline void netdev_tx_completed_queue(struct netdev_queue *dev_queue,
+                unsigned int pkts,
+                unsigned int bytes)
+{}
+static inline void netdev_tx_reset_queue(struct netdev_queue *q) {}
+#endif
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5,8,0)
+static inline void fsleep(unsigned long usecs)
+{
+        if (usecs <= 10)
+                udelay(usecs);
+        else if (usecs <= 20000)
+                usleep_range(usecs, 2 * usecs);
+        else
+                msleep(DIV_ROUND_UP(usecs, 1000));
+}
+#endif /* LINUX_VERSION_CODE < KERNEL_VERSION(5,8,0) */
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5,2,0)
+#define netdev_xmit_more() (0)
+#endif
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5,8,0)
+#define netif_testing_on(dev)
+#define netif_testing_off(dev)
+#endif
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,32)
 typedef int netdev_tx_t;
@@ -175,6 +312,10 @@ do { \
 #define ENABLE_R8168_PROCFS
 #endif
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,11,0)
+#define ENABLE_R8168_SYSFS
+#endif
+
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3,10,0)
 #define NETIF_F_HW_VLAN_RX	NETIF_F_HW_VLAN_CTAG_RX
 #define NETIF_F_HW_VLAN_TX	NETIF_F_HW_VLAN_CTAG_TX
@@ -282,6 +423,13 @@ do { \
 #define  MDIO_EEE_1000T  0x0004
 #endif
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6,9,0)
+#define ethtool_keee ethtool_eee
+#define rtl8168_ethtool_adv_to_mmd_eee_adv_cap1_t ethtool_adv_to_mmd_eee_adv_t
+#else
+#define rtl8168_ethtool_adv_to_mmd_eee_adv_cap1_t linkmode_to_mii_eee_cap1_t
+#endif /* LINUX_VERSION_CODE < KERNEL_VERSION(6,9,0) */
+
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,29)
 #ifdef CONFIG_NET_POLL_CONTROLLER
 #define RTL_NET_POLL_CONTROLLER dev->poll_controller=rtl8168_netpoll
@@ -364,19 +512,19 @@ do { \
 #define RSS_SUFFIX ""
 #endif
 
-#define RTL8168_VERSION "8.052.01" NAPI_SUFFIX FIBER_SUFFIX REALWOW_SUFFIX DASH_SUFFIX RSS_SUFFIX
+#define RTL8168_VERSION "8.055.00" NAPI_SUFFIX FIBER_SUFFIX REALWOW_SUFFIX DASH_SUFFIX RSS_SUFFIX
 #define MODULENAME "r8168"
 #define PFX MODULENAME ": "
 
 #define GPL_CLAIM "\
-r8168  Copyright (C) 2023 Realtek NIC software team <nicfae@realtek.com> \n \
+r8168  Copyright (C) 2024 Realtek NIC software team <nicfae@realtek.com> \n \
 This program comes with ABSOLUTELY NO WARRANTY; for details, please see <http://www.gnu.org/licenses/>. \n \
 This is free software, and you are welcome to redistribute it under certain conditions; see <http://www.gnu.org/licenses/>. \n"
 
 #ifdef RTL8168_DEBUG
 #define assert(expr) \
         if(!(expr)) {                   \
-            printk( "Assertion failed! %s,%s,%s,line=%d\n", \
+            printk("Assertion failed! %s,%s,%s,line=%d\n", \
             #expr,__FILE__,__FUNCTION__,__LINE__);      \
         }
 #define dprintk(fmt, args...)   do { printk(PFX fmt, ## args); } while (0)
@@ -453,6 +601,7 @@ This is free software, and you are welcome to redistribute it under certain cond
 #define RTL8168_TX_TIMEOUT  (6 * HZ)
 #define RTL8168_LINK_TIMEOUT    (1 * HZ)
 #define RTL8168_ESD_TIMEOUT (2 * HZ)
+#define RTL8168_DASH_TIMEOUT    (0)
 
 #define MAX_NUM_TX_DESC 1024    /* Maximum number of Tx descriptor registers */
 #define MAX_NUM_RX_DESC 1024    /* Maximum number of Rx descriptor registers */
@@ -545,12 +694,19 @@ This is free software, and you are welcome to redistribute it under certain cond
 #define ETH_MIN_MTU  68
 #endif
 
+#ifndef WRITE_ONCE
+#define WRITE_ONCE(var, val) (*((volatile typeof(val) *)(&(var))) = (val))
+#endif
+#ifndef READ_ONCE
+#define READ_ONCE(var) (*((volatile typeof(var) *)(&(var))))
+#endif
+
 /*****************************************************************************/
 
 //#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,3)
-#if (( LINUX_VERSION_CODE < KERNEL_VERSION(2,4,27) ) || \
-     (( LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0) ) && \
-      ( LINUX_VERSION_CODE < KERNEL_VERSION(2,6,3) )))
+#if ((LINUX_VERSION_CODE < KERNEL_VERSION(2,4,27)) || \
+     ((LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)) && \
+      (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,3))))
 /* copied from linux kernel 2.6.20 include/linux/netdev.h */
 #define NETDEV_ALIGN        32
 #define NETDEV_ALIGN_CONST  (NETDEV_ALIGN - 1)
@@ -636,6 +792,23 @@ typedef int napi_budget;
 #endif //LINUX_VERSION_CODE < KERNEL_VERSION(2,6,27)
 
 /*****************************************************************************/
+#ifdef CONFIG_R8168_NAPI
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,6,0)
+#define RTL_NAPI_CONSUME_SKB_ANY(skb, budget)          napi_consume_skb(skb, budget)
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(3,14,0)
+#define RTL_NAPI_CONSUME_SKB_ANY(skb, budget)          dev_consume_skb_any(skb);
+#else
+#define RTL_NAPI_CONSUME_SKB_ANY(skb, budget)          dev_kfree_skb_any(skb);
+#endif  //LINUX_VERSION_CODE >= KERNEL_VERSION(4,6,0)
+#else   //CONFIG_R8168_NAPI
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,14,0)
+#define RTL_NAPI_CONSUME_SKB_ANY(skb, budget)          dev_consume_skb_any(skb);
+#else
+#define RTL_NAPI_CONSUME_SKB_ANY(skb, budget)          dev_kfree_skb_any(skb);
+#endif
+#endif  //CONFIG_R8168_NAPI
+
+/*****************************************************************************/
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,9)
 #ifdef __CHECKER__
 #define __iomem __attribute__((noderef, address_space(2)))
@@ -669,7 +842,7 @@ extern void __chk_io_ptr(void __iomem *);
 
 /*****************************************************************************/
 /* 2.5.28 => 2.4.23 */
-#if ( LINUX_VERSION_CODE < KERNEL_VERSION(2,5,28) )
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,5,28))
 
 static inline void _kc_synchronize_irq(void)
 {
@@ -690,12 +863,12 @@ static inline void _kc_synchronize_irq(void)
 
 /*****************************************************************************/
 /* 2.6.4 => 2.6.0 */
-#if ( LINUX_VERSION_CODE < KERNEL_VERSION(2,6,4) )
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,4))
 #define MODULE_VERSION(_version) MODULE_INFO(version, _version)
 #endif /* 2.6.4 => 2.6.0 */
 /*****************************************************************************/
 /* 2.6.0 => 2.5.28 */
-#if ( LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0) )
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0))
 #define MODULE_INFO(version, _version)
 #ifndef CONFIG_E1000_DISABLE_PACKET_SPLIT
 #define CONFIG_E1000_DISABLE_PACKET_SPLIT 1
@@ -726,13 +899,13 @@ static inline int _kc_pci_dma_mapping_error(dma_addr_t dma_addr)
 
 /*****************************************************************************/
 /* 2.4.22 => 2.4.17 */
-#if ( LINUX_VERSION_CODE < KERNEL_VERSION(2,4,22) )
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,4,22))
 #define pci_name(x) ((x)->slot_name)
 #endif /* 2.4.22 => 2.4.17 */
 
 /*****************************************************************************/
 /* 2.6.5 => 2.6.0 */
-#if ( LINUX_VERSION_CODE < KERNEL_VERSION(2,6,5) )
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,5))
 #define pci_dma_sync_single_for_cpu pci_dma_sync_single
 #define pci_dma_sync_single_for_device  pci_dma_sync_single_for_cpu
 #endif /* 2.6.5 => 2.6.0 */
@@ -1094,10 +1267,17 @@ enum RTL8168_registers {
         CounterAddrLow      = 0x10,
         CounterAddrHigh     = 0x14,
         CustomLED       = 0x18,
+#ifdef ENABLE_LIB_SUPPORT
+        TxDescStartAddrLow  = 0x28,
+        TxDescStartAddrHigh = 0x2c,
+        TxHDescStartAddrLow = 0x20,
+        TxHDescStartAddrHigh    = 0x24,
+#else
         TxDescStartAddrLow  = 0x20,
         TxDescStartAddrHigh = 0x24,
         TxHDescStartAddrLow = 0x28,
         TxHDescStartAddrHigh    = 0x2c,
+#endif /* ENABLE_LIB_SUPPORT */
         FLASH           = 0x30,
         ERSR            = 0x36,
         ChipCmd         = 0x37,
@@ -1300,8 +1480,6 @@ enum RTL8168_register_content {
         LinkStatus = 0x02,
         FullDup = 0x01,
 
-#define RTL8168_FULL_DUPLEX_MASK (_1000bpsF | FullDup)
-
         /* DBG_reg */
         Fix_Nak_1 = (1 << 4),
         Fix_Nak_2 = (1 << 3),
@@ -1489,7 +1667,7 @@ enum bits {
 };
 
 #define RTL8168_CP_NUM 4
-#define RTL8168_MAX_SUPPORT_cp_len 110
+#define RTL8168_MAX_SUPPORT_CP_LEN 110
 
 enum rtl8168_cp_status {
         rtl8168_cp_normal = 0,
@@ -1545,6 +1723,8 @@ enum rx_desc_len {
 struct ring_info {
         struct sk_buff  *skb;
         u32     len;
+        unsigned int   bytecount;
+        unsigned short gso_segs;
         u8      __pad[sizeof(void *) - sizeof(u32)];
 };
 
@@ -1568,12 +1748,27 @@ struct pci_resource {
         u32 pci_sn_h;
 };
 
+enum r8168_dash_req_flag {
+        R8168_RCV_REQ_SYS_OK = 0,
+        R8168_RCV_REQ_DASH_OK,
+        R8168_SEND_REQ_HOST_OK,
+        R8168_CMAC_RESET,
+        R8168_CMAC_DISALE_RX_FLAG_MAX,
+        R8168_DASH_REQ_FLAG_MAX
+};
+
 enum r8168_flag {
         R8168_FLAG_DOWN = 0,
         R8168_FLAG_TASK_RESET_PENDING,
         R8168_FLAG_TASK_ESD_CHECK_PENDING,
         R8168_FLAG_TASK_LINKCHG_CHECK_PENDING,
+        R8168_FLAG_TASK_DASH_CHECK_PENDING,
         R8168_FLAG_MAX
+};
+
+enum r8168_sysfs_flag {
+        R8168_SYSFS_RTL_ADV = 0,
+        R8168_SYSFS_FLAG_MAX
 };
 
 /* Flow Control Settings */
@@ -1587,6 +1782,7 @@ enum rtl8168_fc_mode {
 
 struct rtl8168_tx_ring {
         void* priv;
+        struct net_device *netdev;
         u32 index;
         u32 cur_tx; /* Index into the Tx descriptor buffer of next Rx pkt. */
         u32 dirty_tx;
@@ -1602,6 +1798,7 @@ struct rtl8168_tx_ring {
 
 struct rtl8168_rx_ring {
         void* priv;
+        struct net_device *netdev;
         u32 index;
         u32 cur_rx; /* Index into the Rx descriptor buffer of next Rx pkt. */
         u32 dirty_rx;
@@ -1789,6 +1986,20 @@ struct rtl8168_counters {
         u16 tx_underrun;
 };
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3,6,0)
+struct ethtool_eee {
+        __u32	cmd;
+        __u32	supported;
+        __u32	advertised;
+        __u32	lp_advertised;
+        __u32	eee_active;
+        __u32	eee_enabled;
+        __u32	tx_lpi_enabled;
+        __u32	tx_lpi_timer;
+        __u32	reserved[2];
+};
+#endif /* LINUX_VERSION_CODE < KERNEL_VERSION(3,6,0) */
+
 struct rtl8168_private {
         void __iomem *mmio_addr;    /* memory map physical address */
         struct pci_dev *pci_dev;    /* Index of PCI device */
@@ -1882,10 +2093,12 @@ struct rtl8168_private {
         struct work_struct reset_task;
         struct work_struct esd_task;
         struct work_struct linkchg_task;
+        struct work_struct dash_task;
 #else
         struct delayed_work reset_task;
         struct delayed_work esd_task;
         struct delayed_work linkchg_task;
+        struct delayed_work dash_task;
 #endif
         DECLARE_BITMAP(task_flags, R8168_FLAG_MAX);
         unsigned features;
@@ -1969,7 +2182,9 @@ struct rtl8168_private {
         u8 DASH;
         u8 dash_printer_enabled;
         u8 HwPkgDet;
+        u8 HwSuppOcpChannelVer;
         void __iomem *cmac_ioaddr; /* cmac memory map physical address */
+        DECLARE_BITMAP(dash_req_flags, R8168_DASH_REQ_FLAG_MAX);
 
 #ifdef ENABLE_DASH_SUPPORT
         u16 AfterRecvFromFwBufLen;
@@ -1977,51 +2192,45 @@ struct rtl8168_private {
         u16 AfterSendToFwBufLen;
         u8 AfterSendToFwBuf[SEND_TO_FW_BUF_SIZE];
         u16 SendToFwBufferLen;
-        u32 SizeOfSendToFwBuffer ;
-        u32 SizeOfSendToFwBufferMemAlloc ;
-        u32 NumOfSendToFwBuffer ;
+        u32 SizeOfSendToFwBuffer;
+        u32 SizeOfSendToFwBufferMemAlloc;
+        u32 NumOfSendToFwBuffer;
 
         u8 OobReq;
         u8 OobAck;
         u32 OobReqComplete;
         u32 OobAckComplete;
 
-        u8 RcvFwReqSysOkEvt;
-        u8 RcvFwDashOkEvt;
-        u8 SendFwHostOkEvt;
-
-        u8 DashFwDisableRx;
-
-        void *SendToFwBuffer ;
-        dma_addr_t SendToFwBufferPhy ;
+        void *SendToFwBuffer;
+        dma_addr_t SendToFwBufferPhy;
         u8 SendingToFw;
         PTX_DASH_SEND_FW_DESC TxDashSendFwDesc;
         dma_addr_t TxDashSendFwDescPhy;
         u32 SizeOfTxDashSendFwDescMemAlloc;
-        u32 SizeOfTxDashSendFwDesc ;
-        u32 NumTxDashSendFwDesc ;
-        u32 CurrNumTxDashSendFwDesc ;
-        u32 LastSendNumTxDashSendFwDesc ;
+        u32 SizeOfTxDashSendFwDesc;
+        u32 NumTxDashSendFwDesc;
+        u32 CurrNumTxDashSendFwDesc;
+        u32 LastSendNumTxDashSendFwDesc;
 
-        u32 NumRecvFromFwBuffer ;
-        u32 SizeOfRecvFromFwBuffer ;
-        u32 SizeOfRecvFromFwBufferMemAlloc ;
-        void *RecvFromFwBuffer ;
-        dma_addr_t RecvFromFwBufferPhy ;
+        u32 NumRecvFromFwBuffer;
+        u32 SizeOfRecvFromFwBuffer;
+        u32 SizeOfRecvFromFwBufferMemAlloc;
+        void *RecvFromFwBuffer;
+        dma_addr_t RecvFromFwBufferPhy;
 
         PRX_DASH_FROM_FW_DESC RxDashRecvFwDesc;
         dma_addr_t RxDashRecvFwDescPhy;
         u32 SizeOfRxDashRecvFwDescMemAlloc;
-        u32 SizeOfRxDashRecvFwDesc ;
-        u32 NumRxDashRecvFwDesc ;
-        u32 CurrNumRxDashRecvFwDesc ;
+        u32 SizeOfRxDashRecvFwDesc;
+        u32 NumRxDashRecvFwDesc;
+        u32 CurrNumRxDashRecvFwDesc;
         u8 DashReqRegValue;
         u16 HostReqValue;
 
         u32 CmacResetIsrCounter;
-        u8 CmacResetIntr ;
-        u8 CmacResetting ;
-        u8 CmacOobIssueCmacReset ;
+        u8 CmacResetIntr;
+        u8 CmacResetting;
+        u8 CmacOobIssueCmacReset;
         u32 CmacResetbyFwCnt;
 
 #if defined(ENABLE_DASH_PRINTER_SUPPORT)
@@ -2044,13 +2253,20 @@ struct rtl8168_private {
         //Realwow--------------
 #endif //ENABLE_REALWOW_SUPPORT
 
-        struct ethtool_eee eee;
+        struct ethtool_keee eee;
 
         u32 dynamic_aspm_packet_count;
 
 #ifdef ENABLE_R8168_PROCFS
         //Procfs support
         struct proc_dir_entry *proc_dir;
+        struct proc_dir_entry *proc_dir_debug;
+        struct proc_dir_entry *proc_dir_test;
+#endif
+#ifdef ENABLE_R8168_SYSFS
+        //sysfs support
+        DECLARE_BITMAP(sysfs_flag, R8168_SYSFS_FLAG_MAX);
+        u32 testmode;
 #endif
         u8 HwSuppRxDescType;
         u8 InitRxDescType;
@@ -2089,7 +2305,7 @@ rtl8168_num_lib_rx_rings(struct rtl8168_private *tp)
 {
         int count, i;
 
-        for (count = 0, i = tp->num_rx_rings; i < tp->HwSuppNumRxQueues; i++)
+        for (count = 0, i = 1; i < tp->HwSuppNumRxQueues; i++)
                 if(tp->lib_rx_ring[i].enabled)
                         count++;
 
@@ -2120,7 +2336,7 @@ rtl8168_lib_rx_ring_released(struct rtl8168_private *tp)
         int i;
         bool released = 0;
 
-        for (i = tp->num_rx_rings; i < tp->HwSuppNumRxQueues; i++) {
+        for (i = 1; i < tp->HwSuppNumRxQueues; i++) {
                 struct rtl8168_ring *ring = &tp->lib_rx_ring[i];
                 if (ring->allocated)
                         goto exit;
@@ -2169,6 +2385,11 @@ static inline unsigned int
 rtl8168_tot_rx_rings(struct rtl8168_private *tp)
 {
         return tp->num_rx_rings + rtl8168_num_lib_rx_rings(tp);
+}
+
+static inline struct netdev_queue *txring_txq(const struct rtl8168_tx_ring *ring)
+{
+        return netdev_get_tx_queue(ring->netdev, ring->index);
 }
 
 static inline bool
@@ -2330,6 +2551,29 @@ rtl8168_get_rxdesc(struct rtl8168_private *tp, struct RxDesc *RxDescBase, u32 co
         return (struct RxDesc*)desc;
 }
 
+#ifdef ENABLE_DASH_SUPPORT
+
+static inline void
+rtl8168_enable_dash2_interrupt(struct rtl8168_private *tp)
+{
+        if (!tp->DASH)
+                return;
+
+        if (HW_DASH_SUPPORT_CMAC(tp))
+                RTL_CMAC_W8(tp, CMAC_IBIMR0, (ISRIMR_DASH_TYPE2_ROK | ISRIMR_DASH_TYPE2_TOK | ISRIMR_DASH_TYPE2_TDU | ISRIMR_DASH_TYPE2_RDU | ISRIMR_DASH_TYPE2_RX_DISABLE_IDLE));
+}
+
+static inline void
+rtl8168_disable_dash2_interrupt(struct rtl8168_private *tp)
+{
+        if (!tp->DASH)
+                return;
+
+        if (HW_DASH_SUPPORT_CMAC(tp))
+                RTL_CMAC_W8(tp, CMAC_IBIMR0, 0);
+}
+#endif
+
 static inline void
 rtl8168_disable_interrupt_by_vector(struct rtl8168_private *tp,
                                     u32 message_id)
@@ -2382,7 +2626,7 @@ static inline void rtl8168_lib_reset_prepare(struct rtl8168_private *tp) { }
 static inline void rtl8168_lib_reset_complete(struct rtl8168_private *tp) { }
 #endif
 
-#define HW_SUPPORT_CHECK_PHY_DISABLE_MODE(_M)        ((_M)->HwSuppCheckPhyDisableModeVer > 0 )
+#define HW_SUPPORT_CHECK_PHY_DISABLE_MODE(_M)        ((_M)->HwSuppCheckPhyDisableModeVer > 0)
 #define HW_SUPP_SERDES_PHY(_M)        ((_M)->HwSuppSerDesPhyVer > 0)
 #define HW_HAS_WRITE_PHY_MCU_RAM_CODE(_M)        (((_M)->HwHasWrRamCodeToMicroP == TRUE) ? 1 : 0)
 #define HW_SUPPORT_UPS_MODE(_M)        ((_M)->HwSuppUpsVer > 0)

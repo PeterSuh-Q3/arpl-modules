@@ -5,7 +5,7 @@
 # r8168 is the Linux device driver released for Realtek Gigabit Ethernet
 # controllers with PCI-Express interface.
 #
-# Copyright(c) 2023 Realtek Semiconductor Corp. All rights reserved.
+# Copyright(c) 2024 Realtek Semiconductor Corp. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the Free
@@ -55,6 +55,11 @@ int rtl8168_tool_ioctl(struct rtl8168_private *tp, struct ifreq *ifr)
         ret = 0;
         switch (my_cmd.cmd) {
         case RTLTOOL_READ_MAC:
+                if ((my_cmd.offset + my_cmd.len) > R8168_REGS_SIZE) {
+                        ret = -EINVAL;
+                        break;
+                }
+
                 if (my_cmd.len==1)
                         my_cmd.data = readb(tp->mmio_addr+my_cmd.offset);
                 else if (my_cmd.len==2)
@@ -72,6 +77,11 @@ int rtl8168_tool_ioctl(struct rtl8168_private *tp, struct ifreq *ifr)
                 }
                 break;
         case RTLTOOL_WRITE_MAC:
+                if ((my_cmd.offset + my_cmd.len) > R8168_REGS_SIZE) {
+                        ret = -EINVAL;
+                        break;
+                }
+
                 if (my_cmd.len==1)
                         writeb(my_cmd.data, tp->mmio_addr+my_cmd.offset);
                 else if (my_cmd.len==2)
