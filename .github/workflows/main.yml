@@ -67,13 +67,14 @@ jobs:
           sha256sum ./purley-4.4.302.tgz | awk '{print $1}' | awk '{print $1 " 'purley-4.4.302.tgz' modpack.sha256"}' >> files-chksum
 
           echo "download latest firmware.tgz(simple copy)"
-          curl -kL https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/firmware.tgz -o /tmp/firmware.tgz
+          #curl -kL https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/firmware.tgz -o /tmp/firmware.tgz
           #echo "extract latest firmware.tgz"
           #[ ! -d ./firmware/ ] && mkdir ./firmware/
           #tar -xaf /tmp/firmware.tgz -C ./firmware/
           #echo "copy thirdparty i915 firmware"
           #[ -d ./thirdparty/firmware ] && cp -vrf ./thirdparty/firmware/* ./firmware/
           #(cd firmware && tar caf ../firmware.tgz *)
+          curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/firmware.tgz
           sha256sum ./firmware.tgz | awk '{print $1}' | awk '{print $1 " 'firmware.tgz' firmware.sha256"}' >> files-chksum
           
           cat files-chksum
