@@ -49,21 +49,21 @@ jobs:
           curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/bromolow-3.10.108.tgz
           curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/epyc7002-7.1-5.10.55.tgz
           curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/epyc7002-7.2-5.10.55.tgz
-          curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/broadwellnkv2-4.4.108.tgz
+          curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/broadwellnkv2-4.4.180.tgz
           curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/broadwellnkv2-4.4.302.tgz
-          curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/broadwellntbap-4.4.108.tgz
+          curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/broadwellntbap-4.4.180.tgz
           curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/broadwellntbap-4.4.302.tgz
-          curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/purley-4.4.108.tgz
+          curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/purley-4.4.180.tgz
           curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/purley-4.4.302.tgz
           
           sha256sum ./bromolow-3.10.108.tgz    | awk '{print $1}' | awk '{print $1 " 'bromolow-3.10.108.tgz'    modpack.sha256"}' >> files-chksum
           sha256sum ./epyc7002-7.1-5.10.55.tgz | awk '{print $1}' | awk '{print $1 " 'epyc7002-7.1-5.10.55.tgz' modpack.sha256"}' >> files-chksum
           sha256sum ./epyc7002-7.2-5.10.55.tgz | awk '{print $1}' | awk '{print $1 " 'epyc7002-7.2-5.10.55.tgz' modpack.sha256"}' >> files-chksum
-          sha256sum ./broadwellnkv2-4.4.108.tgz | awk '{print $1}' | awk '{print $1 " 'broadwellnkv2-4.4.108.tgz' modpack.sha256"}' >> files-chksum
+          sha256sum ./broadwellnkv2-4.4.180.tgz | awk '{print $1}' | awk '{print $1 " 'broadwellnkv2-4.4.180.tgz' modpack.sha256"}' >> files-chksum
           sha256sum ./broadwellnkv2-4.4.302.tgz | awk '{print $1}' | awk '{print $1 " 'broadwellnkv2-4.4.302.tgz' modpack.sha256"}' >> files-chksum
-          sha256sum ./broadwellntbap-4.4.108.tgz | awk '{print $1}' | awk '{print $1 " 'broadwellntbap-4.4.108.tgz' modpack.sha256"}' >> files-chksum
+          sha256sum ./broadwellntbap-4.4.180.tgz | awk '{print $1}' | awk '{print $1 " 'broadwellntbap-4.4.180.tgz' modpack.sha256"}' >> files-chksum
           sha256sum ./broadwellntbap-4.4.302.tgz | awk '{print $1}' | awk '{print $1 " 'broadwellntbap-4.4.302.tgz' modpack.sha256"}' >> files-chksum
-          sha256sum ./purley-4.4.108.tgz | awk '{print $1}' | awk '{print $1 " 'purley-4.4.108.tgz' modpack.sha256"}' >> files-chksum
+          sha256sum ./purley-4.4.180.tgz | awk '{print $1}' | awk '{print $1 " 'purley-4.4.180.tgz' modpack.sha256"}' >> files-chksum
           sha256sum ./purley-4.4.302.tgz | awk '{print $1}' | awk '{print $1 " 'purley-4.4.302.tgz' modpack.sha256"}' >> files-chksum
 
           echo "download latest firmware.tgz(simple copy)"
