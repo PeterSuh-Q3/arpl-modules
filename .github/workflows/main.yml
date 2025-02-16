@@ -14,8 +14,8 @@ jobs:
 
       - name: Tar modules
         run: |
-          ls -d *-*/ | grep -v -e braswell -e epyc7002
-          for D in `ls -d *-*/ | grep -v -e braswell -e epyc7002`; do
+          ls -d *-*/ | grep -v -e braswell -e bromolow -e epyc7002
+          for D in `ls -d *-*/ | grep -v -e braswell -e bromolow -e epyc7002`; do
             E=$(echo ${D} | sed 's#/##')
               echo "backup ${E} tcrp modules"
               for file in "$E"/*.ko; do
@@ -45,8 +45,8 @@ jobs:
             sha256sum ./${E}.tgz | awk '{print $1}' | awk '{print $1 " '${E}.tgz' modpack.sha256"}' >> files-chksum
           done
 
-          echo "download latest epyc7002 module pack(simple copy from rr-modules 24.10.1)"
-          #curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/bromolow-3.10.108.tgz
+          echo "download latest bromolow epyc7002 module pack(simple copy from rr-modules 24.10.1)"
+          curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/bromolow-3.10.108.tgz
           curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/epyc7002-7.1-5.10.55.tgz
           curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/epyc7002-7.2-5.10.55.tgz
           #curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/broadwellnkv2-4.4.180.tgz
@@ -56,7 +56,7 @@ jobs:
           #curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/purley-4.4.180.tgz
           #curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/purley-4.4.302.tgz
           
-          #sha256sum ./bromolow-3.10.108.tgz    | awk '{print $1}' | awk '{print $1 " 'bromolow-3.10.108.tgz'    modpack.sha256"}' >> files-chksum
+          sha256sum ./bromolow-3.10.108.tgz    | awk '{print $1}' | awk '{print $1 " 'bromolow-3.10.108.tgz'    modpack.sha256"}' >> files-chksum
           sha256sum ./epyc7002-7.1-5.10.55.tgz | awk '{print $1}' | awk '{print $1 " 'epyc7002-7.1-5.10.55.tgz' modpack.sha256"}' >> files-chksum
           sha256sum ./epyc7002-7.2-5.10.55.tgz | awk '{print $1}' | awk '{print $1 " 'epyc7002-7.2-5.10.55.tgz' modpack.sha256"}' >> files-chksum
           #sha256sum ./broadwellnkv2-4.4.180.tgz | awk '{print $1}' | awk '{print $1 " 'broadwellnkv2-4.4.180.tgz' modpack.sha256"}' >> files-chksum
