@@ -42,13 +42,15 @@
  */
 #ifdef CONFIG_X86
 #include <asm/apic.h>
-#include <asm/amd.h>
 #endif
 
 #define PREFIX "ACPI: "
 
 #define ACPI_PROCESSOR_CLASS            "processor"
 #define _COMPONENT              ACPI_PROCESSOR_COMPONENT
+
+extern bool amd_e400_c1e_detected;
+
 ACPI_MODULE_NAME("processor_idle");
 
 static unsigned int max_cstate __read_mostly = ACPI_PROCESSOR_MAX_POWER;
