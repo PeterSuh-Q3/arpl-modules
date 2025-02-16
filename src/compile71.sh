@@ -18,6 +18,9 @@ while read PLATFORM KVER; do
   mkdir -p "/tmp/${PLATFORM}-${KVER}"
   #docker run --rm -t -v "${PWD}/${1}/${DIR}":/input -v "${PWD}/../${PLATFORM}-${KVER}":/output \
   #  fbelavenuto/syno-toolkit:${PLATFORM}-${TOOLKIT_VER} compile-module
+  runparam=$(echo "-u `id -u` --rm -t -v "${PWD}/${DIR}":/input -v "/tmp/${PLATFORM}-${KVER}":/output \
+    fbelavenuto/syno-compiler:${TOOLKIT_VER} compile-module ${PLATFORM}")
+  echo $runparam  
   docker run -u `id -u` --rm -t -v "${PWD}/${DIR}":/input -v "/tmp/${PLATFORM}-${KVER}":/output \
     fbelavenuto/syno-compiler:${TOOLKIT_VER} compile-module ${PLATFORM}
   for M in `ls /tmp/${PLATFORM}-${KVER}`; do
