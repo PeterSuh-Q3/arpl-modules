@@ -42,6 +42,7 @@
  */
 #ifdef CONFIG_X86
 #include <asm/apic.h>
+#include <asm/amd.h>
 #endif
 
 #define PREFIX "ACPI: "
