@@ -25,7 +25,7 @@ jobs:
           cp -vf ${E}.tgz /opt/repack
           
       - name: Upload
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: module-repack 
           path: /opt/repack
