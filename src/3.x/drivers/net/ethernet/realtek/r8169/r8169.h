@@ -46,7 +46,7 @@ typedef int netdev_tx_t;
 #define device_set_wakeup_enable(dev, val)	do {} while (0)
 #endif
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3,14,0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
 static inline void ether_addr_copy(u8 *dst, const u8 *src)
 {
         u16 *a = (u16 *)dst;
