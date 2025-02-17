@@ -7,29 +7,15 @@ jobs:
   tar:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Tar modules
         run: |
-          git clone https://github.com/wjz304/arpl-modules.git
-          ls -d broadwellnk-4.4.302/
-          for D in `ls -d broadwellnk-4.4.302`; do
+          ls -d bromolow-3.10.108/
+          for D in `ls -d bromolow-3.10.108`; do
             E=$(echo ${D} | sed 's#/##')
-            if [ ${E} == "epyc7002-5.10.55" ]; then
-              mkdir -p /tmp/${E}
-              mv -f ./${E}/*.ko /tmp/${E}/
-              echo "merge wjz304's official ${E}"
-              cp -vf ./arpl-modules/official/${E}/*.ko ./${E}/
-              echo "copy ${E} vanilla module"              
-              [ -d ./vanilla/${E} ] && cp -vf ./vanilla/${E}/*.ko ./${E}/
-            else 
-              echo "merge wjz304's official ${E}"
-              cp -vf ./arpl-modules/official/${E}/*.ko ./${E}/
-              echo "merge wjz304's thirdparty ${E}"              
-              [ -d ./arpl-modules/thirdparty/${E} ] && cp -vf ./arpl-modules/thirdparty/${E}/*.ko ./${E}/
-              echo "copy ${E} vanilla module"              
-              [ -d ./vanilla/${E} ] && cp -vf ./vanilla/${E}/*.ko ./${E}/
-            fi
+            echo "copy ${E} vanilla module"              
+            [ -d ./vanilla/${E} ] && cp -vf ./vanilla/${E}/*.ko ./${E}/
             (cd ${E} && tar caf ../${E}.tgz *.ko)
             sha256sum ./${E}.tgz | awk '{print $1}' | awk '{print $1 " '${E}.tgz' files.sha256"}' >> files-chksum
           done
