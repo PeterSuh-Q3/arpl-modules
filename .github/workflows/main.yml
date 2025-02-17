@@ -14,9 +14,10 @@ jobs:
 
       - name: Tar modules
         run: |
-          ls -d *-*/ | grep -v -e braswell -e bromolow -e epyc7002
-          for D in `ls -d *-*/ | grep -v -e braswell -e bromolow -e epyc7002`; do
+          ls -d *-*/ | grep -v -e epyc7002
+          for D in `ls -d *-*/ | grep -v -e epyc7002`; do
             E=$(echo ${D} | sed 's#/##')
+            if [[ "${E}" != bromolow* ]]; then
               echo "backup ${E} tcrp modules"
               for file in "$E"/*.ko; do
                 if [ -f "$file" ]; then
@@ -37,6 +38,7 @@ jobs:
                   mv -vf "$file" "$new_name"                
                 fi
               done
+            fi  
             echo "copy ${E} vanilla module"
             [ -d ./vanilla/${E} ] && cp -vf ./vanilla/${E}/*.ko ./${E}/
             echo "copy ${E} thirdparty module"
@@ -46,35 +48,12 @@ jobs:
           done
 
           echo "download latest bromolow epyc7002 module pack(simple copy from rr-modules 24.10.1)"
-          curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/bromolow-3.10.108.tgz
-          curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/epyc7002-7.1-5.10.55.tgz
-          curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/epyc7002-7.2-5.10.55.tgz
-          #curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/broadwellnkv2-4.4.180.tgz
-          #curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/broadwellnkv2-4.4.302.tgz
-          #curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/broadwellntbap-4.4.180.tgz
-          #curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/broadwellntbap-4.4.302.tgz
-          #curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/purley-4.4.180.tgz
-          #curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/purley-4.4.302.tgz
+          curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/releases/download/rr-last/epyc7002-7.1-5.10.55.tgz
+          curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/releases/download/rr-last/epyc7002-7.2-5.10.55.tgz
+          curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/raw/refs/heads/main/firmware.tgz
           
-          sha256sum ./bromolow-3.10.108.tgz    | awk '{print $1}' | awk '{print $1 " 'bromolow-3.10.108.tgz'    modpack.sha256"}' >> files-chksum
           sha256sum ./epyc7002-7.1-5.10.55.tgz | awk '{print $1}' | awk '{print $1 " 'epyc7002-7.1-5.10.55.tgz' modpack.sha256"}' >> files-chksum
           sha256sum ./epyc7002-7.2-5.10.55.tgz | awk '{print $1}' | awk '{print $1 " 'epyc7002-7.2-5.10.55.tgz' modpack.sha256"}' >> files-chksum
-          #sha256sum ./broadwellnkv2-4.4.180.tgz | awk '{print $1}' | awk '{print $1 " 'broadwellnkv2-4.4.180.tgz' modpack.sha256"}' >> files-chksum
-          #sha256sum ./broadwellnkv2-4.4.302.tgz | awk '{print $1}' | awk '{print $1 " 'broadwellnkv2-4.4.302.tgz' modpack.sha256"}' >> files-chksum
-          #sha256sum ./broadwellntbap-4.4.180.tgz | awk '{print $1}' | awk '{print $1 " 'broadwellntbap-4.4.180.tgz' modpack.sha256"}' >> files-chksum
-          #sha256sum ./broadwellntbap-4.4.302.tgz | awk '{print $1}' | awk '{print $1 " 'broadwellntbap-4.4.302.tgz' modpack.sha256"}' >> files-chksum
-          #sha256sum ./purley-4.4.180.tgz | awk '{print $1}' | awk '{print $1 " 'purley-4.4.180.tgz' modpack.sha256"}' >> files-chksum
-          #sha256sum ./purley-4.4.302.tgz | awk '{print $1}' | awk '{print $1 " 'purley-4.4.302.tgz' modpack.sha256"}' >> files-chksum
-
-          echo "download latest firmware.tgz(simple copy)"
-          #curl -kL https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/firmware.tgz -o /tmp/firmware.tgz
-          #echo "extract latest firmware.tgz"
-          #[ ! -d ./firmware/ ] && mkdir ./firmware/
-          #tar -xaf /tmp/firmware.tgz -C ./firmware/
-          #echo "copy thirdparty i915 firmware"
-          #[ -d ./thirdparty/firmware ] && cp -vrf ./thirdparty/firmware/* ./firmware/
-          #(cd firmware && tar caf ../firmware.tgz *)
-          curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/releases/latest/download/firmware.tgz
           sha256sum ./firmware.tgz | awk '{print $1}' | awk '{print $1 " 'firmware.tgz' firmware.sha256"}' >> files-chksum
           
           cat files-chksum
