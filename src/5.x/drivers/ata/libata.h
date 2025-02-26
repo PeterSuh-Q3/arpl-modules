@@ -276,10 +276,10 @@ static inline void zpodd_post_poweron(struct ata_device *dev) {}
 
 #ifdef MY_ABC_HERE
 int syno_gpio_with_scmd(struct ata_port *ap, struct scsi_device *sdev, SYNO_PM_PKG *pPkg, u8 rw);
-int syno_i2c_with_scmd(struct ata_port *ap, struct scsi_device *sdev, SYNO_PM_I2C_PKG *pPkg, u8 rw);
+int syno_i2c_with_scmd(struct ata_port *ap, struct scsi_device *sdev, SYNO_PM_PKG *pPkg, u8 rw);
 int syno_jmb_575_led_ctl_with_scmd(struct ata_port *ap, struct scsi_device *sdev, u8 *pLedMask, u8 rw);
-unsigned int syno_sata_pmp_read_i2c(struct ata_port *ap, SYNO_PM_I2C_PKG *pPM_pkg);
-unsigned int syno_sata_pmp_write_i2c(struct ata_port *ap, SYNO_PM_I2C_PKG *pPM_pkg);
+unsigned int syno_sata_pmp_read_i2c(struct ata_port *ap, SYNO_PM_PKG *pPM_pkg);
+unsigned int syno_sata_pmp_write_i2c(struct ata_port *ap, SYNO_PM_PKG *pPM_pkg);
 unsigned int syno_jmb575_polling_data(struct ata_port *ap, char *buf, unsigned int sectors);
 #define SYNO_JMB575_GET_INFO_FEATURE 0xE5
 int syno_pmp_get_ebox_node_by_unique_id(u8 synoUniqueID, u8 isRP, struct device_node **pEBoxNode);
