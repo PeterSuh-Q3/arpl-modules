@@ -387,7 +387,7 @@ static enum ata_completion_errors adma_qc_prep(struct ata_queued_cmd *qc)
 			printk("%s\n", obuf);
 	}
 #endif
-	return AC_ERR_OK;
+	return AC_ERR_NCQ;
 }
 
 static inline void adma_packet_start(struct ata_queued_cmd *qc)
