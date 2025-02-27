@@ -1394,7 +1394,7 @@ static enum ata_completion_errors nv_adma_qc_prep(struct ata_queued_cmd *qc)
 			(qc->flags & ATA_QCFLAG_DMAMAP));
 		nv_adma_register_mode(qc->ap);
 		ata_bmdma_qc_prep(qc);
-		return AC_ERR_OK;
+		return AC_ERR_NCQ;
 	}
 
 	cpb->resp_flags = NV_CPB_RESP_DONE;
@@ -1427,7 +1427,7 @@ static enum ata_completion_errors nv_adma_qc_prep(struct ata_queued_cmd *qc)
 	wmb();
 	cpb->resp_flags = 0;
 
-	return AC_ERR_OK;
+	return AC_ERR_NCQ;
 }
 
 static unsigned int nv_adma_qc_issue(struct ata_queued_cmd *qc)
@@ -1995,15 +1995,15 @@ static enum ata_completion_errors nv_swncq_qc_prep(struct ata_queued_cmd *qc)
 {
 	if (qc->tf.protocol != ATA_PROT_NCQ) {
 		ata_bmdma_qc_prep(qc);
-		return AC_ERR_OK;
+		return AC_ERR_NCQ;
 	}
 
 	if (!(qc->flags & ATA_QCFLAG_DMAMAP))
-		return AC_ERR_OK;
+		return AC_ERR_NCQ;
 
 	nv_swncq_fill_sg(qc);
 
-	return AC_ERR_OK;
+	return AC_ERR_NCQ;
 }
 
 static void nv_swncq_fill_sg(struct ata_queued_cmd *qc)
