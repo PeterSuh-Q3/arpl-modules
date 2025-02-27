@@ -2142,15 +2142,15 @@ static enum ata_completion_errors mv_qc_prep(struct ata_queued_cmd *qc)
 	switch (tf->protocol) {
 	case ATA_PROT_DMA:
 		if (tf->command == ATA_CMD_DSM)
-			return AC_ERR_OK;
+			return AC_ERR_NCQ;
 		/* fall-thru */
 	case ATA_PROT_NCQ:
 		break;	/* continue below */
 	case ATA_PROT_PIO:
 		mv_rw_multi_errata_sata24(qc);
-		return AC_ERR_OK;
+		return AC_ERR_NCQ;
 	default:
-		return AC_ERR_OK;
+		return AC_ERR_NCQ;
 	}
 
 	/* Fill in command request block
@@ -2213,10 +2213,10 @@ static enum ata_completion_errors mv_qc_prep(struct ata_queued_cmd *qc)
 	mv_crqb_pack_cmd(cw++, tf->command, ATA_REG_CMD, 1);	/* last */
 
 	if (!(qc->flags & ATA_QCFLAG_DMAMAP))
-		return AC_ERR_OK;
+		return AC_ERR_NCQ;
 	mv_fill_sg(qc);
 
-	return AC_ERR_OK;
+	return AC_ERR_NCQ;
 }
 
 /**
@@ -2242,9 +2242,9 @@ static enum ata_completion_errors mv_qc_prep_iie(struct ata_queued_cmd *qc)
 
 	if ((tf->protocol != ATA_PROT_DMA) &&
 	    (tf->protocol != ATA_PROT_NCQ))
-		return AC_ERR_OK;
+		return AC_ERR_NCQ;
 	if (tf->command == ATA_CMD_DSM)
-		return AC_ERR_OK;  /* use bmdma for this */
+		return AC_ERR_NCQ;  /* use bmdma for this */
 
 	/* Fill in Gen IIE command request block */
 	if (!(tf->flags & ATA_TFLAG_WRITE))
@@ -2285,10 +2285,10 @@ static enum ata_completion_errors mv_qc_prep_iie(struct ata_queued_cmd *qc)
 		);
 
 	if (!(qc->flags & ATA_QCFLAG_DMAMAP))
-		return AC_ERR_OK;
+		return AC_ERR_NCQ;
 	mv_fill_sg(qc);
 
-	return AC_ERR_OK;
+	return AC_ERR_NCQ;
 }
 
 /**
