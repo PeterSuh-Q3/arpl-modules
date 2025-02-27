@@ -336,11 +336,11 @@ static void sil_fill_sg(struct ata_queued_cmd *qc)
 static enum ata_completion_errors sil_qc_prep(struct ata_queued_cmd *qc)
 {
 	if (!(qc->flags & ATA_QCFLAG_DMAMAP))
-		return AC_ERR_OK;
+		return AC_ERR_NCQ;
 
 	sil_fill_sg(qc);
 
-	return AC_ERR_OK;
+	return AC_ERR_NCQ;
 }
 
 static unsigned char sil_get_device_cache_line(struct pci_dev *pdev)
