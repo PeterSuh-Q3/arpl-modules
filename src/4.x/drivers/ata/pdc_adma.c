@@ -322,7 +322,7 @@ static enum ata_completion_errors adma_qc_prep(struct ata_queued_cmd *qc)
 
 	adma_enter_reg_mode(qc->ap);
 	if (qc->tf.protocol != ATA_PROT_DMA)
-		return AC_ERR_OK;
+		return AC_ERR_NCQ;
 
 	buf[i++] = 0;	/* Response flags */
 	buf[i++] = 0;	/* reserved */
