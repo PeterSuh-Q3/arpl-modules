@@ -1029,7 +1029,7 @@ static enum ata_completion_errors sil24_qc_prep(struct ata_queued_cmd *qc)
 	if (qc->flags & ATA_QCFLAG_DMAMAP)
 		sil24_fill_sg(qc, sge);
 
-	return AC_ERR_OK;
+	return AC_ERR_NCQ;
 }
 
 static unsigned int sil24_qc_issue(struct ata_queued_cmd *qc)
