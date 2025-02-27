@@ -45,6 +45,10 @@ jobs:
           done
           
           cat files-chksum
+
+          mkdir -p /opt/repack
+          cp -vf files-chksum /opt/repack
+          cp -vf ${E}.tgz /opt/repack
           
       - name: Upload
         uses: actions/upload-artifact@v4
