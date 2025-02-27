@@ -66,11 +66,6 @@ enum {
 	ATA_DNXFER_QUIET	= (1 << 31),
 };
 
-enum ata_completion_errors {
-    AC_ERR_OK  = 0,   /* no error */
-    AC_ERR_DEV = (1 << 0),   /* device error */
-};
-
 extern atomic_t ata_print_id;
 extern int atapi_passthru16;
 extern int libata_fua;
