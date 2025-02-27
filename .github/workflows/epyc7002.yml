@@ -48,7 +48,7 @@ jobs:
 
           mkdir -p /opt/repack
           cp -vf files-chksum /opt/repack
-          cp -vf *.tgz /opt/repack
+          cp -vf epyc7002*.tgz /opt/repack
           
       - name: Upload
         uses: actions/upload-artifact@v4
