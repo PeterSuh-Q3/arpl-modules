@@ -112,6 +112,32 @@ static int asix_ioctl (struct net_device *net, struct ifreq *rq, int cmd)
 	return generic_mii_ioctl(&dev->mii, if_mii(rq), cmd, NULL);
 }
 
+static int asix_get_settings(struct net_device *net,
+				 struct ethtool_cmd *cmd)
+{
+	if (!net->phydev)
+		return -ENODEV;
+
+	return phy_ethtool_gset(net->phydev, cmd);
+}
+
+static int asix_set_settings(struct net_device *net,
+				 struct ethtool_cmd *cmd)
+{
+	if (!net->phydev)
+		return -ENODEV;
+
+	return phy_ethtool_sset(net->phydev, cmd);
+}
+
+static int asix_nway_reset(struct net_device *net)
+{
+	if (!net->phydev)
+		return -ENODEV;
+
+	return phy_start_aneg(net->phydev);
+}
+
 /* We need to override some ethtool_ops so we require our
    own structure so we don't interfere with other usbnet
    devices that may be connected at the same time. */
@@ -125,9 +151,9 @@ static const struct ethtool_ops ax88172_ethtool_ops = {
 	.get_eeprom_len		= asix_get_eeprom_len,
 	.get_eeprom		= asix_get_eeprom,
 	.set_eeprom		= asix_set_eeprom,
-	.get_settings		= usbnet_get_settings,
-	.set_settings		= usbnet_set_settings,
-	.nway_reset		= usbnet_nway_reset,
+	.get_settings		= asix_get_settings,
+	.set_settings		= asix_set_settings,
+	.nway_reset		= asix_nway_reset,
 };
 
 static void ax88172_set_multicast(struct net_device *net)
@@ -267,9 +293,9 @@ static const struct ethtool_ops ax88772_ethtool_ops = {
 	.get_eeprom_len		= asix_get_eeprom_len,
 	.get_eeprom		= asix_get_eeprom,
 	.set_eeprom		= asix_set_eeprom,
-	.get_settings		= usbnet_get_settings,
-	.set_settings		= usbnet_set_settings,
-	.nway_reset		= usbnet_nway_reset,
+	.get_settings		= asix_get_settings,
+	.set_settings		= asix_set_settings,
+	.nway_reset		= asix_nway_reset,
 };
 
 static int ax88772_link_reset(struct usbnet *dev)
@@ -500,9 +526,9 @@ static const struct ethtool_ops ax88178_ethtool_ops = {
 	.get_eeprom_len		= asix_get_eeprom_len,
 	.get_eeprom		= asix_get_eeprom,
 	.set_eeprom		= asix_set_eeprom,
-	.get_settings		= usbnet_get_settings,
-	.set_settings		= usbnet_set_settings,
-	.nway_reset		= usbnet_nway_reset,
+	.get_settings		= asix_get_settings,
+	.set_settings		= asix_set_settings,
+	.nway_reset		= asix_nway_reset,
 };
 
 static int marvell_phy_init(struct usbnet *dev)
