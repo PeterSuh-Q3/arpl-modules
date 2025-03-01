@@ -1,4 +1,4 @@
-name: Trigger test
+name: Trigger other workflow
 
 on:
   workflow_dispatch:
