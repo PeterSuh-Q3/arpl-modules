@@ -30,8 +30,9 @@ jobs:
             tar -xaf /tmp/${E}.tgz -C /tmp/${E}/
             
             echo "copy ${E} rr modules to tcrp if module not exists"
-            for file in /tmp/"$E"/*.ko; do
-                [ ! -f ./${E}/"$file" ] && cp -vf "$file" ./${E}/"$file" || echo "$file Already exists..."
+            for fullpath in /tmp/"$E"/*.ko; do
+                file=$(basename "$fullpath")
+                [ ! -f ./${E}/"$file" ] && cp -vf "$fullpath" ./${E}/"$file" || echo "$file Already exists..."
             done
             
             #echo "restore ${E} tcrp modules"
