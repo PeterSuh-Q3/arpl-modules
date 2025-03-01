@@ -1,3 +1,6 @@
+#ifndef MY_ABC_HERE
+#define MY_ABC_HERE
+#endif
 /*
  * Scsi Host Layer for MPT (Message Passing Technology) based controllers
  *
@@ -15737,6 +15740,9 @@ static struct scsi_host_template mpt2sas_driver_template = {
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3,19,0))
 	.track_queue_depth              = 1,
 #endif
+#if defined(MY_ABC_HERE)
+	.syno_port_type			= SYNO_PORT_TYPE_SAS,
+#endif /* MY_ABC_HERE */
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3,16,0))
 	.cmd_size           = sizeof(struct scsiio_tracker),
 #endif
@@ -15799,6 +15805,9 @@ static struct scsi_host_template mpt3sas_driver_template = {
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3,19,0))
 	.track_queue_depth              = 1,
 #endif
+#if defined(MY_ABC_HERE)
+	.syno_port_type			= SYNO_PORT_TYPE_SAS,
+#endif /* MY_ABC_HERE */
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3,16,0))
 	.cmd_size           = sizeof(struct scsiio_tracker),
 #endif
