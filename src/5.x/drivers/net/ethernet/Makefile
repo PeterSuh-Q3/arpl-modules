@@ -18,7 +18,6 @@
 #obj-$(CONFIG_NET_VENDOR_APPLE) += apple/
 obj-$(CONFIG_NET_VENDOR_AQUANTIA) += aquantia/
 #obj-$(CONFIG_NET_VENDOR_ARC) += arc/
-obj-m += asix/
 obj-$(CONFIG_NET_VENDOR_ATHEROS) += atheros/
 #obj-$(CONFIG_NET_VENDOR_AURORA) += aurora/
 #obj-$(CONFIG_NET_VENDOR_CADENCE) += cadence/
