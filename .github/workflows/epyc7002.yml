@@ -15,26 +15,32 @@ jobs:
           for D in `ls -d *-*/ | grep epyc7002`; do
             E=$(echo ${D} | sed 's#/##')
 
-            echo "backup ${E} tcrp modules"
-            for file in "$E"/*.ko; do
-              if [ -f "$file" ]; then
-                new_name="${file}.bak"
-                mv -vf "$file" "$new_name"                
-              fi
-            done
+            #echo "backup ${E} tcrp modules"
+            #for file in "$E"/*.ko; do
+            #  if [ -f "$file" ]; then
+            #    new_name="${file}.bak"
+            #    mv -vf "$file" "$new_name"                
+            #  fi
+            #done
             
             echo "download last rr ${E} module pack"
             curl -kL https://github.com/PeterSuh-Q3/arpl-modules/releases/download/rr-last/${E}.tgz -o /tmp/${E}.tgz
             echo "extract last rr ${E} module pack"
-            tar -xaf /tmp/${E}.tgz -C ./${E}/
+            mkdir -p /tmp/${E}/
+            tar -xaf /tmp/${E}.tgz -C /tmp/${E}/
             
-            echo "restore ${E} tcrp modules"
-            for file in "$E"/*.ko.bak; do
-              if [ -f "$file" ]; then
-                new_name="${file%.bak}"
-                [ ! -f "$new_name" ] && mv -vf "$file" "$new_name" || rm -vf "$file"
-              fi
+            echo "copy ${E} rr modules to tcrp if module not exists"
+            for file in /tmp/"$E"/*.ko; do
+                [ ! -f ./${E}/"$file" ] && cp -vf "$file" ./${E}/"$file" || echo "$file Already exists..."
             done
+            
+            #echo "restore ${E} tcrp modules"
+            #for file in "$E"/*.ko.bak; do
+            #  if [ -f "$file" ]; then
+            #    new_name="${file%.bak}"
+            #    [ ! -f "$new_name" ] && mv -vf "$file" "$new_name" || rm -vf "$file"
+            #  fi
+            #done
 
             echo "copy ${E} vanilla module"
             [ -d ./vanilla/${E} ] && cp -vf ./vanilla/${E}/*.ko ./${E}/
