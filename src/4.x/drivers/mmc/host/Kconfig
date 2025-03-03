@@ -4,6 +4,37 @@
 
 comment "MMC/SD/SDIO Host Controller Drivers"
 
+if SYNO_LSP_RTD129X
+menuconfig MMC_RTK_SDMMC
+    tristate "Realtek SD/MMC host driver"
+    depends on ARCH_RTD129X
+    select GPIOLIB
+    select GPIO_RTD129X
+    help
+      Realtek SD/MMC host support.
+endif # SYNO_LSP_RTD129X
+
+if SYNO_LSP_RTD1619
+menuconfig MMC_RTK_EMMC
+    tristate "Realtek EMMC host driver"
+        help
+          Support RealTek EMMC for Kylin.
+
+menuconfig MMC_RTK_SDMMC
+    tristate "Realtek SD/MMC host driver"
+    help
+      Realtek SD/MMC host support.
+endif # SYNO_LSP_RTD1619
+
+if SYNO_LSP_RTD129X || SYNO_LSP_RTD1619
+config MMC_RTK_SDMMC_DEBUG
+    bool  "Enable Realtek SD/MMC host driver debug message."
+    depends on MMC_RTK_SDMMC
+    default n
+        help
+          Enable Realtek SD/MMC host driver debug message.
+endif # SYNO_LSP_RTD129X || SYNO_LSP_RTD1619
+
 config MMC_ARMMMCI
 	tristate "ARM AMBA Multimedia Card Interface support"
 	depends on ARM_AMBA
@@ -72,6 +103,9 @@ config MMC_SDHCI_BIG_ENDIAN_32BIT_BYTE_SWAPPER
 config MMC_SDHCI_PCI
 	tristate "SDHCI support on PCI bus"
 	depends on MMC_SDHCI && PCI
+	select MMC_CQHCI
+	select IOSF_MBI if X86
+
 	help
 	  This selects the PCI Secure Digital Host Controller Interface.
 	  Most controllers found today are PCI devices.
@@ -352,6 +386,26 @@ config MMC_SDHCI_ST
 
 	  If you have a controller with this interface, say Y or M here.
 	  If unsure, say N.
+
+if SYNO_LSP_RTD1619
+menuconfig MMC_SDHCI_RTK
+    tristate "SDHCI support for Realtek SoC"
+    depends on RTK_PLATFORM
+    depends on MMC_SDHCI_PLTFM
+    select MMC_SDHCI_IO_ACCESSORS
+    help
+      This selects the Secure Digital Host Controller Interface in
+      Realtek SoCs.
+
+      If you have a controller with this interface, say Y or M here.
+      If unsure, say N.
+
+config RTK_SDIO_CLK_ADJUST
+    bool "Dynamic SDIO clock adjust support"
+    depends on MMC_SDHCI_RTK
+        help
+          SDIO clock adjusting API for WIFI driver
+endif # SYNO_LSP_RTD1619
 
 config MMC_OMAP
 	tristate "TI OMAP Multimedia Card Interface support"
@@ -773,6 +827,20 @@ config MMC_SUNXI
 	  This selects support for the SD/MMC Host Controller on
 	  Allwinner sunxi SoCs.
 
+config MMC_CQHCI
+	tristate "Command Queue Host Controller Interface support"
+	depends on HAS_DMA
+	help
+	  This selects the Command Queue Host Controller Interface (CQHCI)
+	  support present in host controllers of Qualcomm Technologies, Inc
+	  amongst others.
+	  This controller supports eMMC devices with command queue support.
+
+	  If you have a controller with this interface, say Y or M here.
+
+	  If unsure, say N.
+
+
 config MMC_TOSHIBA_PCI
 	tristate "Toshiba Type A SD/MMC Card Interface Driver"
 	depends on PCI
@@ -785,4 +853,12 @@ config MMC_MTK
 	  This selects the MediaTek(R) Secure digital and Multimedia card Interface.
 	  If you have a machine with a integrated SD/MMC card reader, say Y or M here.
 	  This is needed if support for any SD/SDIO/MMC devices is required.
+	  If unsure, say N.
+
+config MMC_SDHCI_XENON
+	tristate "Marvell Xenon eMMC/SD/SDIO SDHCI driver"
+	depends on MMC_SDHCI_PLTFM && SYNO_LSP_ARMADA_16_12
+	help
+	  This selects Marvell Xenon eMMC/SD/SDIO SDHCI.
+	  If you have a controller with this interface, say Y or M here.
 	  If unsure, say N.

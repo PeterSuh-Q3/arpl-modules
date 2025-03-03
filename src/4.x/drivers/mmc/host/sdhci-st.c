@@ -456,6 +456,10 @@ static int sdhci_st_suspend(struct device *dev)
 	struct st_mmc_platform_data *pdata = pltfm_host->priv;
 	int ret = sdhci_suspend_host(host);
 
+	if (host->tuning_mode != SDHCI_TUNING_MODE_3)
+		mmc_retune_needed(host->mmc);
+
+	ret = sdhci_suspend_host(host);
 	if (ret)
 		goto out;
 

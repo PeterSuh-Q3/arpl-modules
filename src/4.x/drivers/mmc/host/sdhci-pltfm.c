@@ -36,6 +36,12 @@
 #endif
 #include "sdhci-pltfm.h"
 
+#if defined(CONFIG_SYNO_LSP_RTD1619)
+#ifdef CONFIG_MMC_SDHCI_RTK
+void rtk_sdhci_platform_init(void);
+#endif
+
+#endif /* CONFIG_SYNO_LSP_RTD1619 */
 unsigned int sdhci_pltfm_clk_get_max_clock(struct sdhci_host *host)
 {
 	struct sdhci_pltfm_host *pltfm_host = sdhci_priv(host);
@@ -147,6 +153,12 @@ struct sdhci_host *sdhci_pltfm_init(struct platform_device *pdev,
 		host->quirks2 = pdata->quirks2;
 	}
 
+#if defined(CONFIG_SYNO_LSP_RTD1619)
+#ifdef CONFIG_MMC_SDHCI_RTK
+	rtk_sdhci_platform_init();
+#endif
+
+#endif /* CONFIG_SYNO_LSP_RTD1619 */
 	host->irq = platform_get_irq(pdev, 0);
 
 	if (!request_mem_region(iomem->start, resource_size(iomem),
@@ -234,6 +246,9 @@ EXPORT_SYMBOL_GPL(sdhci_pltfm_unregister);
 int sdhci_pltfm_suspend(struct device *dev)
 {
 	struct sdhci_host *host = dev_get_drvdata(dev);
+
+	if (host->tuning_mode != SDHCI_TUNING_MODE_3)
+		mmc_retune_needed(host->mmc);
 
 	return sdhci_suspend_host(host);
 }
