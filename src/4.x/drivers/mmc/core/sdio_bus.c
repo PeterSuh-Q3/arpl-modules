@@ -281,7 +281,6 @@ struct sdio_func *sdio_alloc_func(struct mmc_card *card)
 	if (!func)
 		return ERR_PTR(-ENOMEM);
 
-#if KERNEL_VERSION(4, 4, 91) <= LINUX_VERSION_CODE
 	/*
 	 * allocate buffer separately to make sure it's properly aligned for
 	 * DMA usage (incl. 64 bit DMA)
@@ -291,7 +290,7 @@ struct sdio_func *sdio_alloc_func(struct mmc_card *card)
 		kfree(func);
 		return ERR_PTR(-ENOMEM);
 	}
-#endif
+
 	func->card = card;
 
 	device_initialize(&func->dev);

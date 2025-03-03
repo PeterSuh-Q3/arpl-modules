@@ -1,3 +1,6 @@
+#ifndef MY_ABC_HERE
+#define MY_ABC_HERE
+#endif
 /*
  *  linux/drivers/mmc/core/core.c
  *
@@ -46,6 +49,12 @@
 #include "sd_ops.h"
 #include "sdio_ops.h"
 
+#if defined(CONFIG_SYNO_LSP_RTD1619)
+#ifdef CONFIG_MMC_SDHCI_RTK
+#include "../host/sdhci.h"
+#endif /* CONFIG_MMC_SDHCI_RTK */
+
+#endif /* CONFIG_SYNO_LSP_RTD1619 */
 /* If the device is not responding */
 #define MMC_CORE_TIMEOUT_MS	(10 * 60 * 1000) /* 10 minute timeout */
 
@@ -65,6 +74,17 @@ static const unsigned freqs[] = { 400000, 300000, 200000, 100000 };
  */
 bool use_spi_crc = 1;
 module_param(use_spi_crc, bool, 0);
+#if defined(CONFIG_SYNO_LSP_RTD1619)
+#ifdef CONFIG_MMC_SDHCI_RTK
+bool SDIO_flag = false;
+bool SDIO_fini = false;
+extern bool SDIO_card;
+#endif /* CONFIG_MMC_SDHCI_RTK */
+#ifdef CONFIG_MMC_RTK_SDMMC
+void rtk_sdmmc_close_clk(struct mmc_host *host);
+int rtk_sdmmc_clk_cls_chk(struct mmc_host *host);
+#endif
+#endif /* CONFIG_SYNO_LSP_RTD1619 */
 
 /*
  * Internal function. Schedule delayed work in the MMC work queue.
@@ -220,6 +240,9 @@ static void __mmc_start_request(struct mmc_host *host, struct mmc_request *mrq)
 			return;
 		}
 	}
+
+	if (host->cqe_on)
+		host->cqe_ops->cqe_off(host);
 
 	host->ops->request(host, mrq);
 }
@@ -524,6 +547,44 @@ static void mmc_wait_for_req_done(struct mmc_host *host,
 
 	mmc_retune_release(host);
 }
+
+/**
+ *	mmc_cqe_request_done - CQE has finished processing an MMC request
+ *	@host: MMC host which completed request
+ *	@mrq: MMC request which completed
+ *
+ *	CQE drivers should call this function when they have completed
+ *	their processing of a request.
+ */
+void mmc_cqe_request_done(struct mmc_host *host, struct mmc_request *mrq)
+{
+	mmc_should_fail_request(host, mrq);
+
+	/* Flag re-tuning needed on CRC errors */
+	if ((mrq->cmd && mrq->cmd->error == -EILSEQ) ||
+	    (mrq->data && mrq->data->error == -EILSEQ))
+		mmc_retune_needed(host);
+
+	//trace_mmc_request_done(host, mrq);
+
+	if (mrq->cmd) {
+		pr_debug("%s: CQE req done (direct CMD%u): %d\n",
+			 mmc_hostname(host), mrq->cmd->opcode, mrq->cmd->error);
+	} else {
+		pr_debug("%s: CQE transfer done tag %d\n",
+			 mmc_hostname(host), mrq->tag);
+	}
+
+	if (mrq->data) {
+		pr_debug("%s:     %d bytes transferred: %d\n",
+			 mmc_hostname(host),
+			 mrq->data->bytes_xfered, mrq->data->error);
+	}
+
+	mrq->done(mrq);
+}
+EXPORT_SYMBOL(mmc_cqe_request_done);
+
 
 /**
  *	mmc_pre_req - Prepare for a new request
@@ -1077,11 +1138,20 @@ int mmc_execute_tuning(struct mmc_card *card)
 	if (!host->ops->execute_tuning)
 		return 0;
 
+	if (host->cqe_on)
+		host->cqe_ops->cqe_off(host);
+
 	if (mmc_card_mmc(card))
 		opcode = MMC_SEND_TUNING_BLOCK_HS200;
 	else
 		opcode = MMC_SEND_TUNING_BLOCK;
 
+#if defined(CONFIG_SYNO_LSP_RTD1619)
+#ifdef CONFIG_MMC_RTK_EMMC
+	host->card = card;
+#endif
+
+#endif /* CONFIG_SYNO_LSP_RTD1619 */
 	err = host->ops->execute_tuning(host, opcode);
 
 	if (err)
@@ -1115,6 +1185,9 @@ void mmc_set_bus_width(struct mmc_host *host, unsigned int width)
  */
 void mmc_set_initial_state(struct mmc_host *host)
 {
+	if (host->cqe_on)
+		host->cqe_ops->cqe_off(host);
+
 	mmc_retune_disable(host);
 
 	if (mmc_host_is_spi(host))
@@ -1125,6 +1198,15 @@ void mmc_set_initial_state(struct mmc_host *host)
 	host->ios.bus_width = MMC_BUS_WIDTH_1;
 	host->ios.timing = MMC_TIMING_LEGACY;
 	host->ios.drv_type = 0;
+	host->ios.enhanced_strobe = false;
+
+	/*
+	 * Make sure we are in non-enhanced strobe mode before we
+	 * actually enable it in ext_csd.
+	 */
+	if ((host->caps2 & MMC_CAP2_HS400_ES) &&
+	     host->ops->hs400_enhanced_strobe)
+		host->ops->hs400_enhanced_strobe(host, &host->ios);
 
 	mmc_set_ios(host);
 }
@@ -1593,7 +1675,7 @@ int mmc_set_signal_voltage(struct mmc_host *host, int signal_voltage, u32 ocr)
 
 	err = mmc_wait_for_cmd(host, &cmd, 0);
 	if (err)
-		return err;
+		goto power_cycle;
 
 	if (!mmc_host_is_spi(host) && (cmd.resp[0] & R1_ERROR))
 		return -EIO;
@@ -2462,6 +2544,11 @@ EXPORT_SYMBOL(mmc_hw_reset);
 
 static int mmc_rescan_try_freq(struct mmc_host *host, unsigned freq)
 {
+#if defined(CONFIG_SYNO_LSP_RTD1619)
+#ifdef CONFIG_MMC_SDHCI_RTK
+	int ret=0;
+#endif /* CONFIG_MMC_SDHCI_RTK */
+#endif /* CONFIG_SYNO_LSP_RTD1619 */
 	host->f_init = freq;
 
 #ifdef CONFIG_MMC_DEBUG
@@ -2480,19 +2567,58 @@ static int mmc_rescan_try_freq(struct mmc_host *host, unsigned freq)
 	 * sdio_reset sends CMD52 to reset card.  Since we do not know
 	 * if the card is being re-initialized, just send it.  CMD52
 	 * should be ignored by SD/eMMC cards.
+#if defined(CONFIG_SYNO_LSP_RTD1619)
+	 * Skip it if we already know that we do not support SDIO commands
+#endif // CONFIG_SYNO_LSP_RTD1619
 	 */
+#if defined(CONFIG_SYNO_LSP_RTD1619)
+	if (!(host->caps2 & MMC_CAP2_NO_SDIO))
+		sdio_reset(host);
+
+#else /* CONFIG_SYNO_LSP_RTD1619 */
 	sdio_reset(host);
+#endif /* CONFIG_SYNO_LSP_RTD1619 */
 	mmc_go_idle(host);
 
+#if defined(CONFIG_SYNO_LSP_RTD1619)
+	if (!(host->caps2 & MMC_CAP2_NO_SD))
+		mmc_send_if_cond(host, host->ocr_avail);
+#else /* CONFIG_SYNO_LSP_RTD1619 */
 	mmc_send_if_cond(host, host->ocr_avail);
+#endif /* CONFIG_SYNO_LSP_RTD1619 */
 
 	/* Order's important: probe SDIO, then SD, then MMC */
+#if defined(CONFIG_SYNO_LSP_RTD1619)
+#ifdef CONFIG_MMC_SDHCI_RTK
+	if (!(host->caps2 & MMC_CAP2_NO_SDIO)) {
+		if (!(ret = mmc_attach_sdio(host))) {
+			SDIO_flag = true;
+			return 0;
+		}
+		if(ret == -110)
+			SDIO_fini = true;
+	}
+#else /* CONFIG_MMC_SDHCI_RTK */
+	if (!(host->caps2 & MMC_CAP2_NO_SDIO))
+		if (!mmc_attach_sdio(host))
+			return 0;
+#endif /* CONFIG_MMC_SDHCI_RTK */
+
+	if (!(host->caps2 & MMC_CAP2_NO_SD))
+		if (!mmc_attach_sd(host))
+			return 0;
+
+	if (!(host->caps2 & MMC_CAP2_NO_MMC))
+		if (!mmc_attach_mmc(host))
+			return 0;
+#else /* CONFIG_SYNO_LSP_RTD1619 */
 	if (!mmc_attach_sdio(host))
 		return 0;
 	if (!mmc_attach_sd(host))
 		return 0;
 	if (!mmc_attach_mmc(host))
 		return 0;
+#endif /* CONFIG_SYNO_LSP_RTD1619 */
 
 	mmc_power_off(host);
 	return -EIO;
@@ -2541,6 +2667,7 @@ int mmc_detect_card_removed(struct mmc_host *host)
 		return 1;
 
 	ret = mmc_card_removed(card);
+
 	/*
 	 * The card will be considered unchanged unless we have been asked to
 	 * detect a change or host requires polling to provide card detection.
@@ -2551,6 +2678,7 @@ int mmc_detect_card_removed(struct mmc_host *host)
 	host->detect_change = 0;
 	if (!ret) {
 		ret = _mmc_detect_card_removed(host);
+
 		if (ret && (host->caps & MMC_CAP_NEEDS_POLL)) {
 			/*
 			 * Schedule a detect work as soon as possible to let a
@@ -2593,6 +2721,14 @@ void mmc_rescan(struct work_struct *work)
 	if (host->bus_ops && !host->bus_dead
 	    && !(host->caps & MMC_CAP_NONREMOVABLE))
 		host->bus_ops->detect(host);
+#if defined(CONFIG_SYNO_LSP_RTD1619)
+#if (!defined(CONFIG_ARCH_RTD119X)) && (!defined(CONFIG_ARCH_RTD129x))
+#ifdef CONFIG_MMC_RTK_SDMMC
+		//We close the SD clock for power saving if no SD card
+		if(!(host->caps2 & MMC_CAP2_NO_SD)) rtk_sdmmc_close_clk(host);
+#endif
+#endif
+#endif /* CONFIG_SYNO_LSP_RTD1619 */
 
 	host->detect_change = 0;
 
@@ -2635,6 +2771,24 @@ void mmc_rescan(struct work_struct *work)
  out:
 	if (host->caps & MMC_CAP_NEEDS_POLL)
 		mmc_schedule_delayed_work(&host->detect, HZ);
+#if defined(CONFIG_SYNO_LSP_RTD1619)
+#ifdef CONFIG_MMC_SDHCI_RTK
+	if(SDIO_fini==true && SDIO_flag == false && SDIO_card==false) {
+		SDIO_fini= false;
+		host->caps2 |=  MMC_CAP2_NO_SDIO;
+		rtk_sdhci_close_clk();
+	}
+#endif
+
+#if (!defined(CONFIG_ARCH_RTD119X)) && (!defined(CONFIG_ARCH_RTD129x))
+#ifdef CONFIG_MMC_RTK_SDMMC
+	//We close the SD clock for power saving if no SD card
+	if(!(host->caps2 & MMC_CAP2_NO_SD) && rtk_sdmmc_clk_cls_chk(host)) {
+		rtk_sdmmc_close_clk(host);
+	}
+#endif
+#endif
+#endif /* CONFIG_SYNO_LSP_RTD1619 */
 }
 
 void mmc_start_host(struct mmc_host *host)
@@ -2662,8 +2816,10 @@ void mmc_stop_host(struct mmc_host *host)
 	host->removed = 1;
 	spin_unlock_irqrestore(&host->lock, flags);
 #endif
-	if (host->slot.cd_irq >= 0)
+	if (host->slot.cd_irq >= 0) {
+		mmc_gpio_set_cd_wake(host, false);
 		disable_irq(host->slot.cd_irq);
+	}
 
 	host->rescan_disable = 1;
 	cancel_delayed_work_sync(&host->detect);
@@ -2764,6 +2920,111 @@ int mmc_flush_cache(struct mmc_card *card)
 EXPORT_SYMBOL(mmc_flush_cache);
 
 #ifdef CONFIG_PM
+
+#ifdef MY_DEF_HERE
+/**
+ *      mmc_suspend_host - suspend a host
+ *      @host: mmc host
+ */
+int mmc_suspend_host(struct mmc_host *host)
+{
+        int err = 0;
+
+        if (mmc_bus_needs_resume(host))
+                return 0;
+
+        if (cancel_delayed_work(&host->detect))
+                //wake_unlock(&mmc_delayed_work_wake_lock); //wake_unlock(&host->detect_wake_lock);
+        mmc_flush_scheduled_work();
+
+        mmc_bus_get(host);
+        if (host->bus_ops && !host->bus_dead) {
+                if (host->bus_ops->suspend) {
+                        if (mmc_card_doing_bkops(host->card)) {
+                                err = mmc_stop_bkops(host->card);
+                                if (err)
+                                        goto out;
+                        }
+                        err = host->bus_ops->suspend(host);
+                }
+
+                if (err == -ENOSYS || !host->bus_ops->resume) {
+
+                        // We simply "remove" the card in this case.
+                        // It will be redetected on resume.  (Calling
+                        // bus_ops->remove() with a claimed host can
+                        // deadlock.)
+                        if (host->bus_ops->remove)
+                                host->bus_ops->remove(host);
+                        mmc_claim_host(host);
+                        mmc_detach_bus(host);
+                        mmc_power_off(host);
+                        mmc_release_host(host);
+                        host->pm_flags = 0;
+                        err = 0;
+                }
+        }
+        mmc_bus_put(host);
+
+        if (!err && !mmc_card_keep_power(host))
+                 mmc_power_off(host);
+
+out:
+        return err;
+}
+
+EXPORT_SYMBOL(mmc_suspend_host);
+
+
+/**
+ *      mmc_resume_host - resume a previously suspended host
+ *      @host: mmc host
+ */
+int mmc_resume_host(struct mmc_host *host)
+{
+        int err = 0;
+
+        mmc_bus_get(host);
+        if (mmc_bus_manual_resume(host)) {
+                host->bus_resume_flags |= MMC_BUSRESUME_NEEDS_RESUME;
+                mmc_bus_put(host);
+                return 0;
+        }
+
+        if (host->bus_ops && !host->bus_dead) {
+                if (!mmc_card_keep_power(host)) {
+
+                        mmc_power_up(host,host->ocr_avail);
+                        mmc_select_voltage(host, host->card->ocr);
+
+                         // Tell runtime PM core we just powered up the card,
+                        // since it still believes the card is powered off.
+                         // Note that currently runtime PM is only enabled
+                         // for SDIO cards that are MMC_CAP_POWER_OFF_CARD
+
+                        if (mmc_card_sdio(host->card) &&
+                            (host->caps & MMC_CAP_POWER_OFF_CARD)) {
+                                pm_runtime_disable(&host->card->dev);
+                                pm_runtime_set_active(&host->card->dev);
+                                pm_runtime_enable(&host->card->dev);
+                        }
+                }
+                BUG_ON(!host->bus_ops->resume);
+                err = host->bus_ops->resume(host);
+                if (err) {
+                        pr_warning("%s: error %d during resume "
+                                            "(card was removed?)\n",
+                                            mmc_hostname(host), err);
+                        err = 0;
+                }
+        }
+        host->pm_flags &= ~MMC_PM_KEEP_POWER;
+        mmc_bus_put(host);
+
+        return err;
+}
+EXPORT_SYMBOL(mmc_resume_host);
+#endif /* MY_DEF_HERE */
 
 /* Do the card removal on suspend if card is assumed removeable
  * Do that in pm notifier while userspace isn't yet frozen, so we will be able
