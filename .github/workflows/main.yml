@@ -43,7 +43,7 @@ jobs:
             [ -d ./vanilla/${E} ] && cp -vf ./vanilla/${E}/*.ko ./${E}/
             echo "copy ${E} thirdparty module"
             [ -d ./thirdparty/${E} ] && cp -vf ./thirdparty/${E}/*.ko ./${E}/
-            (cd ${E} && tar czf ../${E}.tgz .* *)
+            (cd ${E} && tar czf ../${E}.tgz *)
             sha256sum ./${E}.tgz | awk '{print $1}' | awk '{print $1 " '${E}.tgz' modpack.sha256"}' >> files-chksum
           done
 
@@ -67,7 +67,7 @@ jobs:
             [ -d ./vanilla/${E} ] && cp -vf ./vanilla/${E}/*.ko ./${E}/
             #echo "copy ${E} thirdparty module" # i915.ko Already have in RR
             #[ -d ./thirdparty/${E} ] && cp -vf ./thirdparty/${E}/*.ko ./${E}/
-            (cd ${E} && ls -l . && tar czf ../${E}.tgz .* *)
+            (cd ${E} && ls -l . && tar czf ../${E}.tgz *)
             sha256sum ./${E}.tgz | awk '{print $1}' | awk '{print $1 " '${E}.tgz' modpack.sha256"}' >> files-chksum
           done
 
