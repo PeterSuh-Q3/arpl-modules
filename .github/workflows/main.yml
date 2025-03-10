@@ -60,7 +60,7 @@ jobs:
             echo "copy ${E} rr modules to tcrp if module not exists"
             for fullpath in /tmp/"$E"/*.ko; do
                 file=$(basename "$fullpath")
-                [ ! -f ./${E}/"$file" ] && cp -vf "$fullpath" ./${E}/"$file" || echo "$file Already exists..."
+                [ ! -f ./${E}/"$file" ] && cp -vf "$fullpath" ./${E}/"$file" || cp -vf "$fullpath" ./${E}/"$file"
             done
 
             echo "copy ${E} vanilla module"
