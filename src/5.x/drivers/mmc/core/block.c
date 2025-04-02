@@ -90,7 +90,7 @@ static DEFINE_MUTEX(block_mutex);
  * The defaults come from config options but can be overriden by module
  * or bootarg options.
  */
-static int perdev_minors = CONFIG_MMC_BLOCK_MINORS;
+static int perdev_minors = 8;
 
 /*
  * We've only got one major, so number of mmcblk devices is
