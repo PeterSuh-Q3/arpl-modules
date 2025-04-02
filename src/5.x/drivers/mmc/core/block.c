@@ -3177,7 +3177,7 @@ static int __init mmc_blk_init(void)
 		goto out_bus_unreg;
 	}
 
-	if (perdev_minors != CONFIG_MMC_BLOCK_MINORS)
+	if (perdev_minors != 8)
 		pr_info("mmcblk: using %d minors per device\n", perdev_minors);
 
 	max_devices = min(MAX_DEVICES, (1 << MINORBITS) / perdev_minors);
