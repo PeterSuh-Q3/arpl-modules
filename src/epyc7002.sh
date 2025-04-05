@@ -2,6 +2,8 @@
 
 set -e
 
+git pull
+
 #if [ -f ../../arpl/PLATFORMS ]; then
 #  cp ../../arpl/PLATFORMS PLATFORMS
 #else
