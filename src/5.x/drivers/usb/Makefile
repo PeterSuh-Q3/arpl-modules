@@ -1,2 +1,2 @@
-obj-y := serial/
-
+obj-y		+= storage/
+obj-y		+= serial/
