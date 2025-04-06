@@ -57,7 +57,7 @@
 #endif /* MY_ABC_HERE */
 
 #ifdef MY_ABC_HERE
-#include <linux/usb/syno_quirks.h>
+#include "syno_quirks.h"
 #endif /* MY_ABC_HERE */
 
 /***********************************************************************
