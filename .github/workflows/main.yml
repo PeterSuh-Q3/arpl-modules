@@ -73,6 +73,9 @@ jobs:
 
           curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/raw/refs/heads/main/firmware.tgz
           sha256sum ./firmware.tgz | awk '{print $1}' | awk '{print $1 " 'firmware.tgz' firmware.sha256"}' >> files-chksum
+
+          curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/raw/refs/heads/main/firmwarei915.tgz
+          sha256sum ./firmwarei915.tgz | awk '{print $1}' | awk '{print $1 " 'firmwarei915.tgz' firmwarei915.sha256"}' >> files-chksum
           
           cat files-chksum
 
