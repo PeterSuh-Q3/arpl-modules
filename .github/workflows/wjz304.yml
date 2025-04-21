@@ -34,50 +34,7 @@ jobs:
       matrix:
         include:
           - version: 7.1 
-            platform: apollolake
-          #- version: 7.1
-          #  platform: braswell
-          - version: 7.1
-            platform: broadwell
-          - version: 7.1 
-            platform: broadwellnk
-          - version: 7.1 
-            platform: bromolow
-          - version: 7.1
-            platform: denverton
-          #- version: 7.1
-          #  platform: epyc7002
-          - version: 7.1 
-            platform: geminilake
-          #- version: 7.1 
-          #  platform: purley
-          - version: 7.1
-            platform: r1000
-          - version: 7.1
-            platform: v1000
-
-          - version: 7.2 
-            platform: apollolake
-          #- version: 7.2
-          #  platform: braswell
-          - version: 7.2
-            platform: broadwell
-          - version: 7.2 
-            platform: broadwellnk
-          #- version: 7.2 
-          #  platform: bromolow
-          - version: 7.2
-            platform: denverton
-          - version: 7.2
-            platform: epyc7002
-          - version: 7.2 
-            platform: geminilake
-          #- version: 7.2 
-          #  platform: purley
-          - version: 7.2
-            platform: r1000
-          - version: 7.2
-            platform: v1000
+            platform: avoton
 
     runs-on: ubuntu-latest
 
