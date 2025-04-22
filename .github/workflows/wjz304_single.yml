@@ -34,7 +34,7 @@ jobs:
       matrix:
         include:
           - version: 7.1 
-            platform: braswell
+            platform: cedarview
 
     runs-on: ubuntu-latest
 
