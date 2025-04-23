@@ -34,7 +34,7 @@ jobs:
       matrix:
         include:
           - version: 7.1 
-            platform: cedarview
+            platform: grantley
 
     runs-on: ubuntu-latest
 
