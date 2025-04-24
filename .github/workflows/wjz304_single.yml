@@ -33,8 +33,8 @@ jobs:
     strategy:
       matrix:
         include:
-          - version: 7.1 
-            platform: grantley
+          - version: 7.2 
+            platform: v1000nk
 
     runs-on: ubuntu-latest
 
