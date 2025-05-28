@@ -120,15 +120,17 @@ jobs:
 
           sudo cp -a ${ROOT_PATH}/source ${ROOT_PATH}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}/
 
+      - name: Install GCC 7
+        run: |
+          sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+          sudo apt-get update
+          sudo apt-get install -y gcc-7 g++-7
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 70
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-7 70
+
       - name: Make
         run: |
           ROOT_PATH=${{ github.workspace }}
-
-          # Ubuntu 18.04 컨테이너 실행
-          sudo docker run -it ubuntu:18.04
-          # 컴파일러 설치 (배포판별 명령어 변경 필요)
-          sudo apt-get update && sudo apt-get install -y gcc-7 g++-7
-
           sudo chroot build_env/ds.${{ matrix.platform }}-${{ matrix.version }} << "EOF"
 
           # 환경변수 설정
