@@ -18,7 +18,7 @@ while read PLATFORM KVER TOOLKIT_VER; do
 
   mkdir -p "/tmp/${PLATFORM}-${KVER}"
   docker run -u `id -u` --rm -t -v "${PWD}/${DIR}":/input -v "/tmp/${PLATFORM}-${KVER}":/output \
-    fbelavenuto/syno-compiler:${TOOLKIT_VER} compile-module ${PLATFORM}
+    dante90/syno-compiler:${TOOLKIT_VER} compile-module ${PLATFORM}
   for M in `ls /tmp/${PLATFORM}-${KVER}`; do
     PLATFORM_DIR="${PLATFORM}-${TOOLKIT_VER}-${KVER}"
     [ -f ~/src/pats/modules/${PLATFORM}/$M ] && \
@@ -41,4 +41,4 @@ while read PLATFORM KVER TOOLKIT_VER; do
   done
   rm -rf /tmp/${PLATFORM}-${KVER}
   
-done < EPYC7002
+done < KVER5
