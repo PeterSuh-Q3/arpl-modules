@@ -125,7 +125,18 @@ jobs:
           ROOT_PATH=${{ github.workspace }}
 
           sudo chroot build_env/ds.${{ matrix.platform }}-${{ matrix.version }} << "EOF"
+          # 컴파일러 설치 (배포판별 명령어 변경 필요)
+          apt-get update && apt-get install -y gcc-7 g++-7
+
+          # 환경변수 설정
           sed -i 's/^CFLAGS=/#CFLAGS=/g; s/^CXXFLAGS=/#CXXFLAGS=/g' /env${BUILD_ARCH}.mak
+          
+          # GCC 7.3 지정 및 Retpoline 플래그 추가
+          export CC=gcc-7
+          export CXX=g++-7
+          export CFLAGS="-mindirect-branch=thunk-inline -mindirect-branch-register -fno-jump-tables"
+          export CXXFLAGS="$CFLAGS"
+          
           while read line; do if [ ${line:0:1} != "#" ]; then export ${line%%=*}="${line#*=}"; fi; done < /env${BUILD_ARCH}.mak
           cd /source/input
           [ -z "`grep 'env.mak' Makefile`" ] && sed -i '1 i include /env.mak' Makefile
@@ -135,7 +146,8 @@ jobs:
           else
             echo "[E] ${{ matrix.platform }}-${{ matrix.version }}"
           fi
-          make -j`nproc` -C "${KSRC}" M="${PWD}" ${PARMS} modules
+          make -j`nproc` CC="$CC" CXX="$CXX" CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" -C "${KSRC}" M="${PWD}" ${PARMS} modules
+          #make -j`nproc` -C "${KSRC}" M="${PWD}" ${PARMS} modules
           while read F; do
             strip -g "${F}"
             echo "Copying `basename ${F}`"
