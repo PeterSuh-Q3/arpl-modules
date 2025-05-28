@@ -36,7 +36,7 @@ jobs:
           - version: 7.2 
             platform: v1000nk
 
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
@@ -123,7 +123,9 @@ jobs:
       - name: Make
         run: |
           ROOT_PATH=${{ github.workspace }}
-          
+
+          # Ubuntu 18.04 컨테이너 실행
+          sudo docker run -it ubuntu:18.04
           # 컴파일러 설치 (배포판별 명령어 변경 필요)
           sudo apt-get update && sudo apt-get install -y gcc-7 g++-7
 
