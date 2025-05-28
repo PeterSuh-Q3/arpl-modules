@@ -123,10 +123,11 @@ jobs:
       - name: Make
         run: |
           ROOT_PATH=${{ github.workspace }}
-
-          sudo chroot build_env/ds.${{ matrix.platform }}-${{ matrix.version }} << "EOF"
+          
           # 컴파일러 설치 (배포판별 명령어 변경 필요)
           apt-get update && apt-get install -y gcc-7 g++-7
+
+          sudo chroot build_env/ds.${{ matrix.platform }}-${{ matrix.version }} << "EOF"
 
           # 환경변수 설정
           sed -i 's/^CFLAGS=/#CFLAGS=/g; s/^CXXFLAGS=/#CXXFLAGS=/g' /env${BUILD_ARCH}.mak
