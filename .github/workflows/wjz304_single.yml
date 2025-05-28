@@ -200,7 +200,7 @@ jobs:
       - name: Tar to Artifacts
         run: |
           #OFFICIAL_PATH="${{ github.workspace }}/official/${{ matrix.platform }}-${{ env.KVER }}"
-          #PARTY3RD_PATH="${{ github.workspace }}/thirdparty/${{ matrix.platform }}-${{ env.KVER }}"
+          PARTY3RD_PATH="${{ github.workspace }}/thirdparty/${{ matrix.platform }}-${{ env.KVER }}"
 
           # echo "copy official modules"
           # for M in `ls ${{ github.workspace }}/source/output`; do
@@ -208,7 +208,7 @@ jobs:
           # done
 
           #echo "copy 3rd modules"
-          #[ -d "${PARTY3RD_PATH}" ] && cp -rf "${PARTY3RD_PATH}/." "${{ github.workspace }}/source/output"
+          [ -d "${PARTY3RD_PATH}" ] && cp -rf "${PARTY3RD_PATH}/." "${{ github.workspace }}/source/output"
 
           tar caf ${{ github.workspace }}/source/${{ matrix.platform }}-${{ env.KVER }}.tgz -C ${{ github.workspace }}/source/output .
 
