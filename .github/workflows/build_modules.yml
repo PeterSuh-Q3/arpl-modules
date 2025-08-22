@@ -1,0 +1,174 @@
+#
+# Copyright (C) 2022 Ing <https://github.com/wjz304>
+# 
+# This is free software, licensed under the MIT License.
+# See /LICENSE for more information.
+#
+# 수정된 버전: chroot 환경을 올바르게 사용하여 빌드
+#
+
+name: Build modules
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - version: 7.2
+            platform: v1000nk
+
+    # 최신 지원 버전을 사용하여 호스트 OS와 빌드의 독립성을 보장합니다.
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+
+      - name: Init Env
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          sudo timedatectl set-timezone "Asia/Shanghai"
+
+      - name: Cache EnvDeploy
+        id: cache-env
+        uses: actions/cache@v4
+        env:
+          cache-name: cache-env
+        with:
+          path: |
+            ${{ github.workspace }}/pkgscripts-ng
+            ${{ github.workspace }}/build_env
+          key: ds.${{ matrix.platform }}-${{ matrix.version }}
+
+      - name: Get EnvDeploy (Setup Chroot)
+        # 캐시가 없는 경우에만 chroot 환경을 설정합니다.
+        if: ${{ steps.cache-env.outputs.cache-hit != 'true' }}
+        run: |
+          ROOT_PATH=${{ github.workspace }}
+
+          git clone https://github.com/SynologyOpenSource/pkgscripts-ng.git ${ROOT_PATH}/pkgscripts-ng
+          cd ${ROOT_PATH}/pkgscripts-ng
+          git checkout DSM${{ matrix.version }}`[ "${{ matrix.version }}" = "6.2" ] && echo ".4"`
+          
+          echo "Deploying Synology build environment..."
+          sudo ./EnvDeploy -q -v ${{ matrix.version }} -p ${{ matrix.platform }}
+
+          ENV_PATH=${ROOT_PATH}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}
+          sudo cp -al ${ROOT_PATH}/pkgscripts-ng ${ENV_PATH}/
+
+          echo "Extracting KVER and CCVER from chroot environment..."
+          sudo chroot ${ENV_PATH} << "EOF"
+          cd pkgscripts
+          version=${{ matrix.version }}; [ ${version:0:1} -gt 6 ] && sed -i 's/print(" ".join(kernels))/pass #&/' ProjectDepends.py
+          sed -i '/PLATFORM_FAMILY/a\\techo "PRODUCT=$PRODUCT" >> $file\n\techo "KSRC=$KERNEL_SEARCH_PATH" >> $file\n\techo "LINUX_SRC=$KERNEL_SEARCH_PATH" >> $file' include/build
+          ./SynoBuild -c -p ${{ matrix.platform }}
+          while read line; do if [ ${line:0:1} != "#" ]; then export ${line%%=*}="${line#*=}"; fi; done < /env${BUILD_ARCH}.mak
+          if [ -f "${KSRC}/Makefile" ]; then
+            [ "${{ matrix.version }}" == "7.2" ] && sed -i 's/--param=allow-store-data-races=0/--allow-store-data-races/g' ${KSRC}/Makefile
+            VERSION=$(cat ${KSRC}/Makefile | grep ^VERSION | awk -F' ' '{print $3}')
+            PATCHLEVEL=$(cat ${KSRC}/Makefile | grep ^PATCHLEVEL | awk -F' ' '{print $3}')
+            SUBLEVEL=$(cat ${KSRC}/Makefile | grep ^SUBLEVEL | awk -F' ' '{print $3}')
+            KVER_DETECTED="${VERSION}.${PATCHLEVEL}.${SUBLEVEL}"
+            CCVER_DETECTED=$($CC --version | head -n 1 | awk -F' ' '{print $3}')
+            [ -f "/env32.mak" ] && echo "KVER=${KVER_DETECTED}" >> /env32.mak && echo "CCVER=${CCVER_DETECTED}" >> /env32.mak
+            [ -f "/env64.mak" ] && echo "KVER=${KVER_DETECTED}" >> /env64.mak && echo "CCVER=${CCVER_DETECTED}" >> /env64.mak
+          fi
+          EOF
+          
+          ENV_PATH=${ROOT_PATH}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}
+          [ -f ${ENV_PATH}/env64.mak ] && ENV_FILE=${ENV_PATH}/env64.mak || ([ -f ${ENV_PATH}/env32.mak ] && ENV_FILE=${ENV_PATH}/env32.mak)
+          if [ -n "${ENV_FILE}" ]; then
+            KVER=$(grep 'KVER=' ${ENV_FILE} | awk -F'=' '{print $2}')
+            CCVER=$(grep 'CCVER=' ${ENV_FILE} | awk -F'=' '{print $2}')
+            echo "Detected KVER=${KVER}"
+            echo "Detected CCVER=${CCVER}"
+            [ -n "${KVER}" ] && echo "KVER=${KVER}" >> $GITHUB_ENV
+            [ -n "${CCVER}" ] && echo "CCVER=${CCVER}" >> $GITHUB_ENV
+          fi
+
+      - name: Get Src
+        run: |
+          ROOT_PATH=${{ github.workspace }}
+          mkdir -p ${ROOT_PATH}/source/output
+          KVER=${{ env.KVER }}
+          if [ -z "${KVER}" ]; then
+            echo "::error::Kernel version (KVER) not found. Cannot proceed."
+            exit 1
+          fi
+          sudo cp -a ${ROOT_PATH}/src/${KVER:0:1}.x ${ROOT_PATH}/source/input
+          sudo cp -a ${ROOT_PATH}/source ${ROOT_PATH}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}/
+
+      # 'Install GCC 7' 단계는 완전히 제거되었습니다.
+      # 빌드는 아래 chroot 환경 내부의 툴체인을 사용합니다.
+
+      - name: Build Modules inside Chroot
+        run: |
+          ROOT_PATH=${{ github.workspace }}
+          echo "Starting build process inside chroot for KVER ${{ env.KVER }}..."
+          sudo chroot build_env/ds.${{ matrix.platform }}-${{ matrix.version }} << "EOF"
+          
+          # Synology 빌드 환경 변수 로드 (CC, CXX, CFLAGS, KSRC 등 설정)
+          if [ -f "/env64.mak" ]; then
+              while read line; do if [ "${line:0:1}" != "#" ]; then export ${line%%=*}="${line#*=}"; fi; done < /env64.mak
+          elif [ -f "/env32.mak" ]; then
+              while read line; do if [ "${line:0:1}" != "#" ]; then export ${line%%=*}="${line#*=}"; fi; done < /env32.mak
+          fi
+          
+          # 필요한 경우, 기존 CFLAGS에 Retpoline 플래그 추가
+          CUSTOM_CFLAGS="-mindirect-branch=thunk-inline -mindirect-branch-register -fno-jump-tables"
+          export CFLAGS="$CFLAGS $CUSTOM_CFLAGS"
+          export CXXFLAGS="$CXXFLAGS $CUSTOM_CFLAGS"
+          
+          # 소스 디렉토리로 이동
+          cd /source/input
+          
+          # 프로젝트별 Makefile 수정 (필요시)
+          [ -z "$(grep 'env.mak' Makefile)" ] && sed -i '1 i include /env.mak' Makefile
+          
+          # 플랫폼별 빌드 파라미터 로드
+          if [ -f "defines.${{ matrix.platform }}" ]; then
+              PARMS=$(cat "defines.${{ matrix.platform }}" | xargs)
+          fi
+          
+          # chroot 환경의 툴체인을 사용하여 빌드 실행
+          echo "Kernel Source Path (KSRC): ${KSRC}"
+          echo "Compiler (CC): $CC"
+          make -j$(nproc) -C "${KSRC}" M="${PWD}" ${PARMS} modules
+          
+          # 빌드된 모듈(.ko) 스트립 및 복사
+          while read F; do
+            strip -g "${F}"
+            echo "Copying $(basename ${F})"
+            cp "${F}" "/source/output"
+          done < <(find . -name '*.ko')
+          EOF
+
+          # 빌드 결과물을 호스트로 복사
+          sudo cp -a ${ROOT_PATH}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}/source/output ${ROOT_PATH}/source/
+          sudo chmod a+rw -R ${ROOT_PATH}/source/output
+
+      # GCC 12 및 Kernel 4.x 관련 패치 (현재 빌드 대상에는 해당되지 않음)
+      # - name: Apply GCC 12 Patch (if needed)
+      #   if: startsWith(env.CCVER, '12') && startsWith(env.KVER, '4')
+      #   uses: ...
+
+      - name: Tar to Artifacts
+        run: |
+          PARTY3RD_PATH="${{ github.workspace }}/thirdparty/${{ matrix.platform }}-${{ env.KVER }}"
+          [ -d "${PARTY3RD_PATH}" ] && cp -rf "${PARTY3RD_PATH}/." "${{ github.workspace }}/source/output"
+          tar caf ${{ github.workspace }}/source/${{ matrix.platform }}-${{ env.KVER }}.tgz -C ${{ github.workspace }}/source/output .
+
+      - name: Upload to Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: modules
+          path: |
+            ${{ github.workspace }}/source/*.tgz
+
+      - name: Clean
+        run: |
+          sudo rm -rf ${{ github.workspace }}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}/source/*
