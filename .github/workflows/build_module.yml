@@ -36,7 +36,7 @@ jobs:
           - version: 7.2 
             platform: v1000nk
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
 
     steps:
       - name: Checkout
