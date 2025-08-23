@@ -8,6 +8,10 @@ name: Build modules (chroot)
 on:
   workflow_dispatch:
 
+env:
+  # KERNEL_VERSION을 Matrix나 입력 파라미터로 정의하세요.
+  KVER: "5.10.55"
+
 jobs:
   build:
     container: ghcr.io/petersuh-q3/arpl-modules-multi:7.2-v1000nk  
