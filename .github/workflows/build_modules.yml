@@ -1,14 +1,10 @@
-#
-# Copyright (C) 2022 Ing <https://github.com/wjz304>
-# 
+# Copyright (C) 2022 Ing
 # This is free software, licensed under the MIT License.
 # See /LICENSE for more information.
-#
-# 수정된 버전: chroot 환경을 올바르게 사용하여 빌드
-#
+
+# 수정된 버전: 빌드 패치 및 chroot 클린업 추가
 
 name: Build modules (chroot)
-
 on:
   workflow_dispatch:
 
@@ -19,7 +15,7 @@ jobs:
         include:
           - version: 7.2
             platform: v1000nk
-
+    
     # 최신 지원 버전을 사용하여 호스트 OS와 빌드의 독립성을 보장합니다.
     runs-on: ubuntu-latest
 
@@ -36,8 +32,6 @@ jobs:
       - name: Cache EnvDeploy
         id: cache-env
         uses: actions/cache@v4
-        env:
-          cache-name: cache-env
         with:
           path: |
             ${{ github.workspace }}/pkgscripts-ng
@@ -53,7 +47,7 @@ jobs:
           git clone https://github.com/SynologyOpenSource/pkgscripts-ng.git ${ROOT_PATH}/pkgscripts-ng
           cd ${ROOT_PATH}/pkgscripts-ng
           git checkout DSM${{ matrix.version }}`[ "${{ matrix.version }}" = "6.2" ] && echo ".4"`
-          
+
           echo "Deploying Synology build environment..."
           sudo ./EnvDeploy -q -v ${{ matrix.version }} -p ${{ matrix.platform }}
 
@@ -78,9 +72,10 @@ jobs:
             [ -f "/env64.mak" ] && echo "KVER=${KVER_DETECTED}" >> /env64.mak && echo "CCVER=${CCVER_DETECTED}" >> /env64.mak
           fi
           EOF
-          
+
           ENV_PATH=${ROOT_PATH}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}
           [ -f ${ENV_PATH}/env64.mak ] && ENV_FILE=${ENV_PATH}/env64.mak || ([ -f ${ENV_PATH}/env32.mak ] && ENV_FILE=${ENV_PATH}/env32.mak)
+
           if [ -n "${ENV_FILE}" ]; then
             KVER=$(grep 'KVER=' ${ENV_FILE} | awk -F'=' '{print $2}')
             CCVER=$(grep 'CCVER=' ${ENV_FILE} | awk -F'=' '{print $2}')
@@ -94,51 +89,58 @@ jobs:
         run: |
           ROOT_PATH=${{ github.workspace }}
           mkdir -p ${ROOT_PATH}/source/output
+
           KVER=${{ env.KVER }}
           if [ -z "${KVER}" ]; then
             echo "::error::Kernel version (KVER) not found. Cannot proceed."
             exit 1
           fi
+
           sudo cp -a ${ROOT_PATH}/src/${KVER:0:1}.x ${ROOT_PATH}/source/input
           sudo cp -a ${ROOT_PATH}/source ${ROOT_PATH}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}/
-
-      # 'Install GCC 7' 단계는 완전히 제거되었습니다.
-      # 빌드는 아래 chroot 환경 내부의 툴체인을 사용합니다.
 
       - name: Build Modules inside Chroot
         run: |
           ROOT_PATH=${{ github.workspace }}
           echo "Starting build process inside chroot for KVER ${{ env.KVER }}..."
           sudo chroot build_env/ds.${{ matrix.platform }}-${{ matrix.version }} << "EOF"
-          
-          # Synology 빌드 환경 변수 로드 (CC, CXX, CFLAGS, KSRC 등 설정)
+          # Synology 빌드 환경 변수 로드
           if [ -f "/env64.mak" ]; then
               while read line; do if [ "${line:0:1}" != "#" ]; then export ${line%%=*}="${line#*=}"; fi; done < /env64.mak
           elif [ -f "/env32.mak" ]; then
               while read line; do if [ "${line:0:1}" != "#" ]; then export ${line%%=*}="${line#*=}"; fi; done < /env32.mak
           fi
-          
-          # 필요한 경우, 기존 CFLAGS에 Retpoline 플래그 추가
+
+          # Retpoline 플래그 추가
           CUSTOM_CFLAGS="-mindirect-branch=thunk-inline -mindirect-branch-register -fno-jump-tables"
           export CFLAGS="$CFLAGS $CUSTOM_CFLAGS"
           export CXXFLAGS="$CXXFLAGS $CUSTOM_CFLAGS"
-          
-          # 소스 디렉토리로 이동
+
           cd /source/input
-          
-          # 프로젝트별 Makefile 수정 (필요시)
+
+          # Makefile 수정
           [ -z "$(grep 'env.mak' Makefile)" ] && sed -i '1 i include /env.mak' Makefile
-          
+
           # 플랫폼별 빌드 파라미터 로드
           if [ -f "defines.${{ matrix.platform }}" ]; then
               PARMS=$(cat "defines.${{ matrix.platform }}" | xargs)
           fi
           
+          # =================================================================
+          # 변경점 1: phy.c 컴파일 오류를 해결하기 위한 패치 추가
+          # =================================================================
+          PHY_C_FILE="/source/input/drivers/net/phy/phy.c"
+          if [ -f "$PHY_C_FILE" ]; then
+              echo "Patching phy.c for static declaration errors..."
+              sed -i 's/^static void phy_trigger_machine/void phy_trigger_machine/' "$PHY_C_FILE"
+              sed -i 's/^static void phy_error/void phy_error/' "$PHY_C_FILE"
+          fi
+
           # chroot 환경의 툴체인을 사용하여 빌드 실행
           echo "Kernel Source Path (KSRC): ${KSRC}"
           echo "Compiler (CC): $CC"
           make -j$(nproc) -C "${KSRC}" M="${PWD}" ${PARMS} modules
-          
+
           # 빌드된 모듈(.ko) 스트립 및 복사
           while read F; do
             strip -g "${F}"
@@ -148,27 +150,39 @@ jobs:
           EOF
 
           # 빌드 결과물을 호스트로 복사
-          sudo cp -a ${ROOT_PATH}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}/source/output ${ROOT_PATH}/source/
+          sudo cp -a ${ROOT_PATH}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}/source/output/. ${ROOT_PATH}/source/output/
           sudo chmod a+rw -R ${ROOT_PATH}/source/output
-
-      # GCC 12 및 Kernel 4.x 관련 패치 (현재 빌드 대상에는 해당되지 않음)
-      # - name: Apply GCC 12 Patch (if needed)
-      #   if: startsWith(env.CCVER, '12') && startsWith(env.KVER, '4')
-      #   uses: ...
 
       - name: Tar to Artifacts
         run: |
-          PARTY3RD_PATH="${{ github.workspace }}/thirdparty/${{ matrix.platform }}-${{ env.KVER }}"
-          [ -d "${PARTY3RD_PATH}" ] && cp -rf "${PARTY3RD_PATH}/." "${{ github.workspace }}/source/output"
-          sudo tar caf ${{ github.workspace }}/source/${{ matrix.platform }}-${{ env.KVER }}.tgz -C ${{ github.workspace }}/source/output .
+          ROOT_PATH=${{ github.workspace }}
+          PARTY3RD_PATH="${ROOT_PATH}/thirdparty/${{ matrix.platform }}-${{ env.KVER }}"
+          [ -d "${PARTY3RD_PATH}" ] && cp -rf "${PARTY3RD_PATH}/." "${ROOT_PATH}/source/output"
+          
+          # 빌드된 파일이 있을 경우에만 아카이브 생성
+          if [ -n "$(ls -A ${ROOT_PATH}/source/output)" ]; then
+            sudo tar caf ${ROOT_PATH}/source/${{ matrix.platform }}-${{ env.KVER }}.tgz -C ${ROOT_PATH}/source/output .
+          else
+            echo "No modules built, skipping archival."
+          fi
 
       - name: Upload to Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: modules
-          path: |
-            ${{ github.workspace }}/source/*.tgz
+          path: ${{ github.workspace }}/source/*.tgz
 
-      - name: Clean
+      # =================================================================
+      # 변경점 2: 기존 Clean 단계를 제거하고, 항상 실행되는 공식 클린업 단계 추가
+      # =================================================================
+      - name: Clean up chroot environment
+        # 이 단계는 빌드 성공/실패 여부와 관계없이 항상 실행되어 마운트를 해제합니다.
+        if: always()
         run: |
-          sudo rm -rf ${{ github.workspace }}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}/source/*
+          ROOT_PATH=${{ github.workspace }}
+          if [ -d "${ROOT_PATH}/pkgscripts-ng" ]; then
+            echo "Cleaning up chroot environment using EnvDeploy..."
+            cd ${ROOT_PATH}/pkgscripts-ng
+            sudo ./EnvDeploy -v ${{ matrix.version }} -p ${{ matrix.platform }} --clean
+          fi
+
