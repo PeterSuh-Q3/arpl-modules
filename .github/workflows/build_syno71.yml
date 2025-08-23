@@ -53,6 +53,9 @@ jobs:
           - version: 7.1 
             platform: broadwellntbap
             KVER: '4.4.108'
+          - version: 7.1 
+            platform: epyc7002
+            KVER: '5.10.55'
 
     steps:
       - name: Checkout repository
@@ -64,10 +67,10 @@ jobs:
           mkdir -p src/input src/output
           cp -a src/${MAJOR}.x/* src/input/
 
-      - name: Grant execute on kver5.sh
-        run: chmod +x src/kver5.sh
+      - name: Grant execute on syno71.sh
+        run: chmod +x src/syno71.sh ${{ matrix.version }} ${{ matrix.platform }} ${{ matrix.KVER }}
 
-      - name: Compile modules via kver5.sh
+      - name: Compile modules via syno71.sh
         run: |
           cd src
           sudo ./syno71.sh 
