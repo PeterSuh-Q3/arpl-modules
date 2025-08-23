@@ -12,15 +12,10 @@ permissions:
 
 env:
   KVER: "5.10.55"
-  TOOLKIT_VER: "7.2"
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        platform: [v1000nk, r1000nk, geminilakenk]
 
     steps:
       - name: Checkout repository
@@ -37,31 +32,11 @@ jobs:
 
       - name: Compile modules via kver5.sh
         run: |
-          PLATFORM=${{ matrix.platform }}
-          mkdir -p tmp/${PLATFORM}-${KVER}
-          # 스크립트 내부에서 /tmp/input, /tmp/output 경로를 사용하도록 가정
-          docker run --rm -u 0 -v "${{ github.workspace }}/src/input":/tmp/input:rw \
-            -v "${{ github.workspace }}/tmp/${PLATFORM}-${KVER}":/tmp/output:rw \
-            dante90/syno-compiler:${TOOLKIT_VER} \
-            /bin/bash -eux /github/workspace/src/kver5.sh "${PLATFORM}" "${KVER}"
-
-      - name: Collect artifacts
-        run: |
-          PLATFORM=${{ matrix.platform }}
-          cp -a tmp/${PLATFORM}-${KVER}/. src/output/
-          chmod -R a+rw src/output/
-
-      - name: Package artifacts
-        run: |
-          if [ -n "$(ls -A src/output)" ]; then
-            tar caf src/${PLATFORM}-${KVER}.tgz -C src/output .
-          else
-            echo "No modules built, skipping archival."
-          fi
+          /github/workspace/src/kver5.sh
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: modules
-          path: src/*.tgz
+          path: src/*
           if-no-files-found: warn
