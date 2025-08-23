@@ -10,31 +10,29 @@ KVER="${3}"
 
 echo -e "Compiling modules ${1} ${2} ${3}"
 
-[ -n "$1" -a "${PLATFORM}" != "$1" ] && continue
 DIR="${KVER:0:1}.x"
-[ ! -d "${PWD}/${DIR}" ] && continue
+
+[ ! -d "${PWD}/${DIR}" ] && exit 1
 
 mkdir -p "/tmp/${PLATFORM}-${KVER}"
+
 docker run -u `id -u` --rm -t -v "${PWD}/${DIR}":/input -v "/tmp/${PLATFORM}-${KVER}":/output \
   dante90/syno-compiler:${TOOLKIT_VER} compile-module ${PLATFORM}
+
+# 출력 디렉터리 생성
+PLATFORM_DIR="${PLATFORM}-${TOOLKIT_VER}-${KVER}"
+mkdir -p "${PWD}/../output/${PLATFORM_DIR}"
+
 for M in `ls /tmp/${PLATFORM}-${KVER}`; do
-  PLATFORM_DIR="${PLATFORM}-${TOOLKIT_VER}-${KVER}"
-  [ -f ~/src/pats/modules/${PLATFORM}/$M ] && \
-    # original      
-    cp ~/src/pats/modules/${PLATFORM}/$M "${PWD}/../${PLATFORM_DIR}" || \
-    # compiled
-    cp /tmp/${PLATFORM}-${KVER}/$M "${PWD}/../${PLATFORM_DIR}"
-    # remove i915 related modules
-    [[ -f ${PWD}/../${PLATFORM}-${KVER}/cfbfillrect.ko ]] && rm ${PWD}/../${PLATFORM_DIR}/cfbfillrect.ko 
-    [[ -f ${PWD}/../${PLATFORM}-${KVER}/cfbimgblt.ko ]] && rm ${PWD}/../${PLATFORM_DIR}/cfbimgblt.ko 
-    [[ -f ${PWD}/../${PLATFORM}-${KVER}/cfbcopyarea.ko ]] && rm ${PWD}/../${PLATFORM_DIR}/cfbcopyarea.ko 
-    [[ -f ${PWD}/../${PLATFORM}-${KVER}/video.ko ]] && rm ${PWD}/../${PLATFORM_DIR}/video.ko 
-    [[ -f ${PWD}/../${PLATFORM}-${KVER}/backlight.ko ]] && rm ${PWD}/../${PLATFORM_DIR}/backlight.ko 
-    [[ -f ${PWD}/../${PLATFORM}-${KVER}/button.ko ]] && rm ${PWD}/../${PLATFORM_DIR}/button.ko 
-    [[ -f ${PWD}/../${PLATFORM}-${KVER}/drm_kms_helper.ko ]] && rm ${PWD}/../${PLATFORM_DIR}/drm_kms_helper.ko 
-    [[ -f ${PWD}/../${PLATFORM}-${KVER}/drm.ko ]] && rm ${PWD}/../${PLATFORM_DIR}/drm.ko 
-    [[ -f ${PWD}/../${PLATFORM}-${KVER}/fb.ko ]] && rm ${PWD}/../${PLATFORM_DIR}/fb.ko 
-    [[ -f ${PWD}/../${PLATFORM}-${KVER}/fbdev.ko ]] && rm ${PWD}/../${PLATFORM_DIR}/fbdev.ko 
-    [[ -f ${PWD}/../${PLATFORM}-${KVER}/i2c-algo-bit.ko ]] && rm ${PWD}/../${PLATFORM_DIR}/i2c-algo-bit.ko
+  # 컴파일된 모듈 복사
+  cp /tmp/${PLATFORM}-${KVER}/$M "${PWD}/../output/${PLATFORM_DIR}/"
+  
+  # i915 관련 모듈 제거
+  case "$M" in
+    cfbfillrect.ko|cfbimgblt.ko|cfbcopyarea.ko|video.ko|backlight.ko|button.ko|drm_kms_helper.ko|drm.ko|fb.ko|fbdev.ko|i2c-algo-bit.ko)
+      rm -f "${PWD}/../output/${PLATFORM_DIR}/$M"
+      ;;
+  esac
 done
+
 rm -rf /tmp/${PLATFORM}-${KVER}
