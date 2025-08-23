@@ -2,7 +2,7 @@
 # This is free software, licensed under the MIT License.
 # See /LICENSE for more information.
 
-name: Build modules (public docker)
+name: Build modules with kver5.sh
 
 on:
   workflow_dispatch:
@@ -12,47 +12,56 @@ permissions:
 
 env:
   KVER: "5.10.55"
-  TOOLKIT_VER: "7.2"  
+  TOOLKIT_VER: "7.2"
 
 jobs:
   build:
-    runs-on: ubuntu-latest    
-    
+    runs-on: ubuntu-latest
+
     strategy:
       matrix:
-        include:
-          - platform: v1000nk
-            
+        platform: [v1000nk, r1000nk, geminilakenk]
+
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Prepare Source
+      - name: Prepare workspace
         run: |
-          mkdir -p source/input source/output        
           MAJOR=$(echo "${KVER}" | cut -d. -f1)
-          cp -a src/${MAJOR}.x/* source/input/
+          mkdir -p src/input src/output
+          cp -a src/${MAJOR}.x/* src/input/
 
-      - name: Compile modules with public container
+      - name: Grant execute on kver5.sh
+        run: chmod +x src/kver5.sh
+
+      - name: Compile modules via kver5.sh
         run: |
-          DIR=source/input
           PLATFORM=${{ matrix.platform }}
-          docker run --rm -t \
-            -v "${PWD}/${DIR}":/tmp/input:rw \
-            -v "${PWD}/tmp/${PLATFORM}-${KVER}":/tmp/output:rw \
+          mkdir -p tmp/${PLATFORM}-${KVER}
+          # 스크립트 내부에서 /tmp/input, /tmp/output 경로를 사용하도록 가정
+          docker run --rm -u 0 -v "${{ github.workspace }}/src/input":/tmp/input:rw \
+            -v "${{ github.workspace }}/tmp/${PLATFORM}-${KVER}":/tmp/output:rw \
             dante90/syno-compiler:${TOOLKIT_VER} \
-            compile-module "${PLATFORM}"
+            /bin/bash -eux /github/workspace/src/kver5.sh "${PLATFORM}" "${KVER}"
 
-      - name: Collect built modules
+      - name: Collect artifacts
         run: |
           PLATFORM=${{ matrix.platform }}
-          cp -a "tmp/${PLATFORM}-${KVER}/." source/output/
-          chmod -R a+rw source/output/
+          cp -a tmp/${PLATFORM}-${KVER}/. src/output/
+          chmod -R a+rw src/output/
 
       - name: Package artifacts
         run: |
-          if [ -n "$(ls -A source/output)" ]; then
-            tar caf source/${{ matrix.platform }}-${{ env.KVER }}.tgz -C source/output .
+          if [ -n "$(ls -A src/output)" ]; then
+            tar caf src/${PLATFORM}-${KVER}.tgz -C src/output .
           else
             echo "No modules built, skipping archival."
           fi
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: modules
+          path: src/*.tgz
+          if-no-files-found: warn
