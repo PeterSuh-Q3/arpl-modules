@@ -1,10 +1,10 @@
 # Copyright (C) 2022 Ing
 # This is free software, licensed under the MIT License.
 # See /LICENSE for more information.
-
-# 수정된 버전: 빌드 패치 및 chroot 클린업 추가
+# 수정된 버전: 캐시 로직 및 환경 변수 추출 분리
 
 name: Build modules (chroot)
+
 on:
   workflow_dispatch:
 
@@ -13,9 +13,9 @@ jobs:
     strategy:
       matrix:
         include:
-          - version: 7.2
+          - version: "7.2"
             platform: v1000nk
-    
+
     # 최신 지원 버전을 사용하여 호스트 OS와 빌드의 독립성을 보장합니다.
     runs-on: ubuntu-latest
 
@@ -39,14 +39,14 @@ jobs:
           key: ds.${{ matrix.platform }}-${{ matrix.version }}
 
       - name: Get EnvDeploy (Setup Chroot)
-        # 캐시가 없는 경우에만 chroot 환경을 설정합니다.
+        # 캐시가 없는 경우에만 chroot 환경을 신규 설정합니다.
         if: ${{ steps.cache-env.outputs.cache-hit != 'true' }}
         run: |
           ROOT_PATH=${{ github.workspace }}
-
+          echo "Setting up new chroot environment..."
           git clone https://github.com/SynologyOpenSource/pkgscripts-ng.git ${ROOT_PATH}/pkgscripts-ng
           cd ${ROOT_PATH}/pkgscripts-ng
-          git checkout DSM${{ matrix.version }}`[ "${{ matrix.version }}" = "6.2" ] && echo ".4"`
+          git checkout DSM${{ matrix.version }}$( [ "${{ matrix.version }}" = "6.2" ] && echo ".4" )
 
           echo "Deploying Synology build environment..."
           sudo ./EnvDeploy -q -v ${{ matrix.version }} -p ${{ matrix.platform }}
@@ -54,7 +54,7 @@ jobs:
           ENV_PATH=${ROOT_PATH}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}
           sudo cp -al ${ROOT_PATH}/pkgscripts-ng ${ENV_PATH}/
 
-          echo "Extracting KVER and CCVER from chroot environment..."
+          echo "Extracting KVER and CCVER for the first time..."
           sudo chroot ${ENV_PATH} << "EOF"
           cd pkgscripts
           version=${{ matrix.version }}; [ ${version:0:1} -gt 6 ] && sed -i 's/print(" ".join(kernels))/pass #&/' ProjectDepends.py
@@ -73,30 +73,49 @@ jobs:
           fi
           EOF
 
+      - name: Extract Env Vars
+        # 캐시 사용 여부와 관계없이 항상 실행하여 KVER/CCVER를 보장합니다.
+        id: extract-vars
+        if: always()
+        run: |
+          ROOT_PATH=${{ github.workspace }}
           ENV_PATH=${ROOT_PATH}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}
-          [ -f ${ENV_PATH}/env64.mak ] && ENV_FILE=${ENV_PATH}/env64.mak || ([ -f ${ENV_PATH}/env32.mak ] && ENV_FILE=${ENV_PATH}/env32.mak)
-
-          if [ -n "${ENV_FILE}" ]; then
-            KVER=$(grep 'KVER=' ${ENV_FILE} | awk -F'=' '{print $2}')
-            CCVER=$(grep 'CCVER=' ${ENV_FILE} | awk -F'=' '{print $2}')
-            echo "Detected KVER=${KVER}"
-            echo "Detected CCVER=${CCVER}"
-            [ -n "${KVER}" ] && echo "KVER=${KVER}" >> $GITHUB_ENV
-            [ -n "${CCVER}" ] && echo "CCVER=${CCVER}" >> $GITHUB_ENV
+          
+          if [ -f "${ENV_PATH}/env64.mak" ]; then
+            ENV_FILE="${ENV_PATH}/env64.mak"
+          elif [ -f "${ENV_PATH}/env32.mak" ]; then
+            ENV_FILE="${ENV_PATH}/env32.mak"
+          else
+            echo "::error::Cannot find env mak file in ${ENV_PATH}"
+            exit 1
           fi
+
+          echo "Reading env vars from ${ENV_FILE}"
+          KVER=$(grep 'KVER=' ${ENV_FILE} | awk -F'=' '{print $2}')
+          CCVER=$(grep 'CCVER=' ${ENV_FILE} | awk -F'=' '{print $2}')
+
+          if [ -z "${KVER}" ] || [ -z "${CCVER}" ]; then
+            echo "::error::KVER or CCVER is empty. KVER=${KVER}, CCVER=${CCVER}"
+            exit 1
+          fi
+
+          echo "Detected KVER=${KVER}"
+          echo "Detected CCVER=${CCVER}"
+          echo "KVER=${KVER}" >> $GITHUB_ENV
+          echo "CCVER=${CCVER}" >> $GITHUB_ENV
 
       - name: Get Src
         run: |
           ROOT_PATH=${{ github.workspace }}
           mkdir -p ${ROOT_PATH}/source/output
-
-          KVER=${{ env.KVER }}
-          if [ -z "${KVER}" ]; then
-            echo "::error::Kernel version (KVER) not found. Cannot proceed."
+          
+          echo "Using KVER=${{ env.KVER }}"
+          if [ -z "${{ env.KVER }}" ]; then
+            echo "::error::Kernel version (KVER) is still not set. Aborting."
             exit 1
           fi
 
-          sudo cp -a ${ROOT_PATH}/src/${KVER:0:1}.x ${ROOT_PATH}/source/input
+          sudo cp -a ${ROOT_PATH}/src/${{ env.KVER }}:0:1}.x ${ROOT_PATH}/source/input
           sudo cp -a ${ROOT_PATH}/source ${ROOT_PATH}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}/
 
       - name: Build Modules inside Chroot
@@ -110,22 +129,22 @@ jobs:
           elif [ -f "/env32.mak" ]; then
               while read line; do if [ "${line:0:1}" != "#" ]; then export ${line%%=*}="${line#*=}"; fi; done < /env32.mak
           fi
-      
+
           # Retpoline 플래그 추가
           CUSTOM_CFLAGS="-mindirect-branch=thunk-inline -mindirect-branch-register -fno-jump-tables"
           export CFLAGS="$CFLAGS $CUSTOM_CFLAGS"
           export CXXFLAGS="$CXXFLAGS $CUSTOM_CFLAGS"
-      
+
           cd /source/input
-      
+
           # Makefile 수정
           [ -z "$(grep 'env.mak' Makefile)" ] && sed -i '1 i include /env.mak' Makefile
-      
+
           # 플랫폼별 빌드 파라미터 로드
           if [ -f "defines.${{ matrix.platform }}" ]; then
               PARMS=$(cat "defines.${{ matrix.platform }}" | xargs)
           fi
-          
+
           # =================================================================
           # 변경점 1: phy.c 컴파일 오류를 해결하기 위한 패치
           # =================================================================
@@ -135,47 +154,35 @@ jobs:
               sed -i 's/^static void phy_trigger_machine/void phy_trigger_machine/' "$PHY_C_FILE"
               sed -i 's/^static void phy_error/void phy_error/' "$PHY_C_FILE"
           fi
-      
+
           # =================================================================
           # 변경점 2: phy-core.c 컴파일 오류를 해결하기 위한 수정된 패치
           # =================================================================
           PHY_CORE_C_FILE="/source/input/drivers/net/phy/phy-core.c"
           if [ -f "$PHY_CORE_C_FILE" ]; then
               echo "Applying corrected patch to phy-core.c..."
-          
-              # 1. 원본 패치에서 시도했던 함수들의 반환 타입을 int -> void로 변경합니다.
-              #    이는 일부 함수에서 모든 경로에 return문이 없어 발생하는 컴파일 오류를 방지합니다.
               sed -i 's/static int __set_linkmode_max_speed/static void __set_linkmode_max_speed/' "$PHY_CORE_C_FILE"
               sed -i 's/int phy_set_max_speed(struct phy_device \*phydev, u32 max_speed)/void phy_set_max_speed(struct phy_device *phydev, u32 max_speed)/' "$PHY_CORE_C_FILE"
-          
-              # 2. void로 변경된 함수 내부에 남아있을 수 있는 불필요한 'return' 구문을 제거합니다.
-              #    기존의 광범위한 방식 대신, 함수 내에서만 동작하도록 수정하여 안전성을 높였습니다.
               sed -i '/^static void __set_linkmode_max_speed/,/}/ s/^\s*return \(err\|0\);/;/g' "$PHY_CORE_C_FILE"
               sed -i '/^void phy_set_max_speed/,/}/ s/^\s*return \(err\|0\);/;/g' "$PHY_CORE_C_FILE"
-          
-              # 3. void로 변경된 함수를 호출하는 곳에서 'return'을 제거하고,
-              #    대신 호출 함수가 정상적으로 값을 반환하도록 'return 0;'를 추가합니다.
-              #    이것이 로그에 나타난 핵심 오류 두 가지를 모두 해결합니다.
               sed -i 's/return __set_linkmode_max_speed(max_speed, phydev->supported);/__set_linkmode_max_speed(max_speed, phydev->supported); return 0;/' "$PHY_CORE_C_FILE"
               sed -i 's/return __set_linkmode_max_speed(min_common_speed, phydev->advertising);/__set_linkmode_max_speed(min_common_speed, phydev->advertising); return 0;/' "$PHY_CORE_C_FILE"
-              
-              # 4. phy_set_max_speed 함수를 호출하는 부분도 동일한 문제가 발생할 수 있으므로 함께 수정합니다.
               sed -i 's/return phy_set_max_speed(phydev, cmd->base.speed);/phy_set_max_speed(phydev, cmd->base.speed); return 0;/' "$PHY_CORE_C_FILE"
           fi
-      
+
           # chroot 환경의 툴체인을 사용하여 빌드 실행
           echo "Kernel Source Path (KSRC): ${KSRC}"
           echo "Compiler (CC): $CC"
           make -j$(nproc) -C "${KSRC}" M="${PWD}" ${PARMS} modules
-      
+
           # 빌드된 모듈(.ko) 스트립 및 복사
           while read F; do
-            strip -g "${F}"
-            echo "Copying $(basename ${F})"
-            cp "${F}" "/source/output"
+              strip -g "${F}"
+              echo "Copying $(basename ${F})"
+              cp "${F}" "/source/output"
           done < <(find . -name '*.ko')
           EOF
-      
+
           # 빌드 결과물을 호스트로 복사
           sudo cp -a ${ROOT_PATH}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}/source/output/. ${ROOT_PATH}/source/output/
           sudo chmod a+rw -R ${ROOT_PATH}/source/output
@@ -185,7 +192,7 @@ jobs:
           ROOT_PATH=${{ github.workspace }}
           PARTY3RD_PATH="${ROOT_PATH}/thirdparty/${{ matrix.platform }}-${{ env.KVER }}"
           [ -d "${PARTY3RD_PATH}" ] && cp -rf "${PARTY3RD_PATH}/." "${ROOT_PATH}/source/output"
-          
+
           # 빌드된 파일이 있을 경우에만 아카이브 생성
           if [ -n "$(ls -A ${ROOT_PATH}/source/output)" ]; then
             sudo tar caf ${ROOT_PATH}/source/${{ matrix.platform }}-${{ env.KVER }}.tgz -C ${ROOT_PATH}/source/output .
@@ -198,10 +205,8 @@ jobs:
         with:
           name: modules
           path: ${{ github.workspace }}/source/*.tgz
+          if-no-files-found: warn
 
-      # =================================================================
-      # 변경점 2: 기존 Clean 단계를 제거하고, 항상 실행되는 공식 클린업 단계 추가
-      # =================================================================
       - name: Clean up chroot
         if: always()
         run: |
@@ -209,6 +214,5 @@ jobs:
           if [ -d "${ROOT_PATH}/pkgscripts-ng" ]; then
             echo "Cleaning up chroot environment using EnvDeploy..."
             cd ${ROOT_PATH}/pkgscripts-ng
-            # '--clean'을 올바른 옵션인 '-c'로 수정
             sudo ./EnvDeploy -v ${{ matrix.version }} -p ${{ matrix.platform }} -c
           fi
