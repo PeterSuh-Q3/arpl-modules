@@ -1,7 +1,7 @@
 # Copyright (C) 2022 Ing
 # This is free software, licensed under the MIT License.
 # See /LICENSE for more information.
-# 수정된 버전: 캐시 로직 및 환경 변수 추출 분리
+# 최종 수정 버전: 불필요한 정리 단계 제거 및 캐시 로직 안정화
 
 name: Build modules (chroot)
 
@@ -43,6 +43,8 @@ jobs:
         if: ${{ steps.cache-env.outputs.cache-hit != 'true' }}
         run: |
           ROOT_PATH=${{ github.workspace }}
+          ENV_PATH=${ROOT_PATH}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}
+
           echo "Setting up new chroot environment..."
           git clone https://github.com/SynologyOpenSource/pkgscripts-ng.git ${ROOT_PATH}/pkgscripts-ng
           cd ${ROOT_PATH}/pkgscripts-ng
@@ -50,11 +52,9 @@ jobs:
 
           echo "Deploying Synology build environment..."
           sudo ./EnvDeploy -q -v ${{ matrix.version }} -p ${{ matrix.platform }}
-
-          ENV_PATH=${ROOT_PATH}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}
           sudo cp -al ${ROOT_PATH}/pkgscripts-ng ${ENV_PATH}/
 
-          echo "Extracting KVER and CCVER for the first time..."
+          echo "Generating and extracting KVER/CCVER..."
           sudo chroot ${ENV_PATH} << "EOF"
           cd pkgscripts
           version=${{ matrix.version }}; [ ${version:0:1} -gt 6 ] && sed -i 's/print(" ".join(kernels))/pass #&/' ProjectDepends.py
@@ -74,7 +74,6 @@ jobs:
           EOF
 
       - name: Extract Env Vars
-        # 캐시 사용 여부와 관계없이 항상 실행하여 KVER/CCVER를 보장합니다.
         id: extract-vars
         if: always()
         run: |
@@ -86,7 +85,7 @@ jobs:
           elif [ -f "${ENV_PATH}/env32.mak" ]; then
             ENV_FILE="${ENV_PATH}/env32.mak"
           else
-            echo "::error::Cannot find env mak file in ${ENV_PATH}"
+            echo "::error::Cannot find env mak file in ${ENV_PATH}. This may happen on the very first run after clearing cache. Please re-run the workflow."
             exit 1
           fi
 
@@ -146,7 +145,7 @@ jobs:
           fi
 
           # =================================================================
-          # 변경점 1: phy.c 컴파일 오류를 해결하기 위한 패치
+          # 패치 1: phy.c 컴파일 오류 해결
           # =================================================================
           PHY_C_FILE="/source/input/drivers/net/phy/phy.c"
           if [ -f "$PHY_C_FILE" ]; then
@@ -156,7 +155,7 @@ jobs:
           fi
 
           # =================================================================
-          # 변경점 2: phy-core.c 컴파일 오류를 해결하기 위한 수정된 패치
+          # 패치 2: phy-core.c 컴파일 오류 해결
           # =================================================================
           PHY_CORE_C_FILE="/source/input/drivers/net/phy/phy-core.c"
           if [ -f "$PHY_CORE_C_FILE" ]; then
