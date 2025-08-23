@@ -30,31 +30,39 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Init Env
-        run: |
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "github-actions[bot]"
-          sudo timedatectl set-timezone "Asia/Seoul"
-
       - name: Prepare Source
         run: |
           MAJOR=$(echo "${KVER}" | cut -d. -f1)
           mkdir -p source/input source/output
           cp -a src/${MAJOR}.x/* source/input/
 
-      - name: Build Modules inside Chroot
-        run: |
-          # chroot 내부에서 빌드
-          sudo chroot /opt/build_env/ds.${{ matrix.platform }}-${{ matrix.version }} /bin/bash -eux << 'EOF'
-            cd /source/input
-            make -j"$(nproc)" M="$(pwd)" modules
-            # 모듈 스트립 및 출력 디렉터리로 복사
-            find . -name '*.ko' -exec strip -g {} \; -exec cp {} /source/output/ \;
-          EOF
+      - name: Log into GitHub Package Registry
+        env:
+          GHCR_PAT: ${{ secrets.GHCR_PAT }}
+        run: echo "${GHCR_PAT}" | docker login ghcr.io \
+          --username ${{ github.actor }} \
+          --password-stdin
 
-          # chroot 외부의 source/output 로 복사 (컨테이너 내부 경로)
-          sudo cp -a /opt/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}/source/output/. source/output/
-          sudo chmod -R a+rw source/output/
+      - name: Pull Build Container
+        run: docker pull ghcr.io/petersuh-q3/arpl-modules-multi:7.2-v1000nk
+
+      - name: Run in Container ( Build Modules inside Chroot )
+        uses: addnab/docker-run-action@v3
+        with:
+          image: ghcr.io/petersuh-q3/arpl-modules-multi:7.2-v1000nk
+          options: --network host        
+          run: |
+            # chroot 내부에서 빌드
+            sudo chroot /opt/build_env/ds.${{ matrix.platform }}-${{ matrix.version }} /bin/bash -eux << 'EOF'
+              cd /source/input
+              make -j"$(nproc)" M="$(pwd)" modules
+              # 모듈 스트립 및 출력 디렉터리로 복사
+              find . -name '*.ko' -exec strip -g {} \; -exec cp {} /source/output/ \;
+            EOF
+  
+            # chroot 외부의 source/output 로 복사 (컨테이너 내부 경로)
+            sudo cp -a /opt/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}/source/output/. source/output/
+            sudo chmod -R a+rw source/output/
 
       - name: Package Artifacts
         run: |
