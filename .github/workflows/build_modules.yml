@@ -1,7 +1,7 @@
 # Copyright (C) 2022 Ing
 # This is free software, licensed under the MIT License.
 # See /LICENSE for more information.
-# 캐시 무효화 및 안정화 버전
+# 소스 경로 수정 버전
 
 name: Build modules (chroot)
 
@@ -113,7 +113,22 @@ jobs:
             exit 1
           fi
 
-          sudo cp -a ${ROOT_PATH}/src/${{ env.KVER }}.x ${ROOT_PATH}/source/input
+          # KVER에서 메이저 버전 추출 (5.10.55 -> 5)
+          MAJOR_VERSION=$(echo "${{ env.KVER }}" | cut -d. -f1)
+          echo "Major kernel version: ${MAJOR_VERSION}"
+          
+          # 올바른 소스 경로 사용
+          SRC_PATH="${ROOT_PATH}/src/${MAJOR_VERSION}.x"
+          echo "Source path: ${SRC_PATH}"
+          
+          if [ ! -d "${SRC_PATH}" ]; then
+            echo "::error::Source directory ${SRC_PATH} not found"
+            echo "Available directories in src/:"
+            ls -la "${ROOT_PATH}/src/" || echo "src directory does not exist"
+            exit 1
+          fi
+
+          sudo cp -a "${SRC_PATH}" "${ROOT_PATH}/source/input"
           sudo cp -a ${ROOT_PATH}/source ${ROOT_PATH}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}/
 
       - name: Build Modules inside Chroot
