@@ -20,39 +20,39 @@ jobs:
           - version: 7.1 
             platform: apollolake
             KVER: '4.4.108'
-          - version: 7.1
-            platform: broadwell
-            KVER: '4.4.108'
-          - version: 7.1 
-            platform: broadwellnk
-            KVER: '4.4.108'
-          - version: 7.1 
-            platform: bromolow
-            KVER: '4.4.108'
-          - version: 7.1
-            platform: denverton
-            KVER: '4.4.108'
-          - version: 7.1 
-            platform: geminilake
-            KVER: '4.4.108'
-          - version: 7.1
-            platform: r1000
-            KVER: '4.4.108'
-          - version: 7.1
-            platform: v1000
-            KVER: '4.4.108'
-          - version: 7.1 
-            platform: purley
-            KVER: '4.4.108'
-          - version: 7.1
-            platform: braswell
-            KVER: '4.4.108'
-          - version: 7.1 
-            platform: broadwellnkv2
-            KVER: '4.4.108'
-          - version: 7.1 
-            platform: broadwellntbap
-            KVER: '4.4.108'
+          #- version: 7.1
+          #  platform: broadwell
+          #  KVER: '4.4.108'
+          #- version: 7.1 
+          # platform: broadwellnk
+          #  KVER: '4.4.108'
+          #- version: 7.1 
+          #  platform: bromolow
+          #  KVER: '4.4.108'
+          #- version: 7.1
+          #  platform: denverton
+          #  KVER: '4.4.108'
+          #- version: 7.1 
+          #  platform: geminilake
+          #  KVER: '4.4.108'
+          #- version: 7.1
+          #  platform: r1000
+          #  KVER: '4.4.108'
+          #- version: 7.1
+          #  platform: v1000
+          #  KVER: '4.4.108'
+          #- version: 7.1 
+          #  platform: purley
+          #  KVER: '4.4.108'
+          #- version: 7.1
+          #  platform: braswell
+          #  KVER: '4.4.108'
+          #- version: 7.1 
+          #  platform: broadwellnkv2
+          #  KVER: '4.4.108'
+          #- version: 7.1 
+          #  platform: broadwellntbap
+          #  KVER: '4.4.108'
           - version: 7.1 
             platform: epyc7002
             KVER: '5.10.55'
@@ -60,12 +60,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-
-      - name: Prepare workspace
-        run: |
-          MAJOR=$(echo "${KVER}" | cut -d. -f1)
-          mkdir -p src/input src/output
-          cp -a src/${MAJOR}.x/* src/input/
 
       - name: Grant execute on syno71.sh
         run: chmod +x src/syno71.sh
@@ -78,6 +72,6 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: modules
+          name: modules-${{ matrix.platform }}-${{ matrix.KVER }}
           path: src/*
           if-no-files-found: warn
