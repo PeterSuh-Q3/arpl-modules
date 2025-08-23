@@ -10,7 +10,7 @@ on:
 
 permissions:
   contents: read         # 코드 체크아웃용
-  packages: read         # GHCR 이미지 풀용
+  packages: none 
 
 env:
   # KERNEL_VERSION을 Matrix나 입력 파라미터로 정의하세요.
