@@ -38,16 +38,16 @@ jobs:
           DIR=source/input
           PLATFORM=${{ matrix.platform }}
           docker run -u "$(id -u)" --rm -t \
-            -v "${PWD}/${DIR}":/input \
-            -v "/tmp/${PLATFORM}-${KVER}":/output \
+            -v "${PWD}/${DIR}":/tmp/input:rw \
+            -v "${PWD}/tmp/${PLATFORM}-${KVER}":/tmp/output:rw \
             dante90/syno-compiler:${TOOLKIT_VER} \
             compile-module "${PLATFORM}"
 
       - name: Collect built modules
         run: |
           PLATFORM=${{ matrix.platform }}
-          cp -a "/tmp/${PLATFORM}-${KVER}/." source/output/
-          sudo chmod -R a+rw source/output/
+          cp -a "tmp/${PLATFORM}-${KVER}/." source/output/
+          chmod -R a+rw source/output/
 
       - name: Package artifacts
         run: |
