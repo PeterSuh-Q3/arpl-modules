@@ -1,7 +1,7 @@
 # Copyright (C) 2022 Ing
 # This is free software, licensed under the MIT License.
 # See /LICENSE for more information.
-# 최종 수정 버전: 불필요한 정리 단계 제거 및 캐시 로직 안정화
+# 캐시 무효화 및 안정화 버전
 
 name: Build modules (chroot)
 
@@ -16,7 +16,6 @@ jobs:
           - version: "7.2"
             platform: v1000nk
 
-    # 최신 지원 버전을 사용하여 호스트 OS와 빌드의 독립성을 보장합니다.
     runs-on: ubuntu-latest
 
     steps:
@@ -36,10 +35,9 @@ jobs:
           path: |
             ${{ github.workspace }}/pkgscripts-ng
             ${{ github.workspace }}/build_env
-          key: ds.${{ matrix.platform }}-${{ matrix.version }}
+          key: ds.${{ matrix.platform }}-${{ matrix.version }}-v2
 
       - name: Get EnvDeploy (Setup Chroot)
-        # 캐시가 없는 경우에만 chroot 환경을 신규 설정합니다.
         if: ${{ steps.cache-env.outputs.cache-hit != 'true' }}
         run: |
           ROOT_PATH=${{ github.workspace }}
@@ -75,7 +73,6 @@ jobs:
 
       - name: Extract Env Vars
         id: extract-vars
-        if: always()
         run: |
           ROOT_PATH=${{ github.workspace }}
           ENV_PATH=${ROOT_PATH}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}
@@ -85,7 +82,9 @@ jobs:
           elif [ -f "${ENV_PATH}/env32.mak" ]; then
             ENV_FILE="${ENV_PATH}/env32.mak"
           else
-            echo "::error::Cannot find env mak file in ${ENV_PATH}. This may happen on the very first run after clearing cache. Please re-run the workflow."
+            echo "::error::Cannot find env mak file in ${ENV_PATH}"
+            echo "Available files in ENV_PATH:"
+            ls -la "${ENV_PATH}/" || echo "ENV_PATH directory does not exist"
             exit 1
           fi
 
@@ -114,7 +113,7 @@ jobs:
             exit 1
           fi
 
-          sudo cp -a ${ROOT_PATH}/src/${{ env.KVER }}:0:1}.x ${ROOT_PATH}/source/input
+          sudo cp -a ${ROOT_PATH}/src/${{ env.KVER }}.x ${ROOT_PATH}/source/input
           sudo cp -a ${ROOT_PATH}/source ${ROOT_PATH}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}/
 
       - name: Build Modules inside Chroot
@@ -144,9 +143,7 @@ jobs:
               PARMS=$(cat "defines.${{ matrix.platform }}" | xargs)
           fi
 
-          # =================================================================
           # 패치 1: phy.c 컴파일 오류 해결
-          # =================================================================
           PHY_C_FILE="/source/input/drivers/net/phy/phy.c"
           if [ -f "$PHY_C_FILE" ]; then
               echo "Patching phy.c for static declaration errors..."
@@ -154,9 +151,7 @@ jobs:
               sed -i 's/^static void phy_error/void phy_error/' "$PHY_C_FILE"
           fi
 
-          # =================================================================
           # 패치 2: phy-core.c 컴파일 오류 해결
-          # =================================================================
           PHY_CORE_C_FILE="/source/input/drivers/net/phy/phy-core.c"
           if [ -f "$PHY_CORE_C_FILE" ]; then
               echo "Applying corrected patch to phy-core.c..."
@@ -205,13 +200,3 @@ jobs:
           name: modules
           path: ${{ github.workspace }}/source/*.tgz
           if-no-files-found: warn
-
-      - name: Clean up chroot
-        if: always()
-        run: |
-          ROOT_PATH=${{ github.workspace }}
-          if [ -d "${ROOT_PATH}/pkgscripts-ng" ]; then
-            echo "Cleaning up chroot environment using EnvDeploy..."
-            cd ${ROOT_PATH}/pkgscripts-ng
-            sudo ./EnvDeploy -v ${{ matrix.version }} -p ${{ matrix.platform }} -c
-          fi
