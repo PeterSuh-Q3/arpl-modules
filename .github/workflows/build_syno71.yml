@@ -19,43 +19,43 @@ jobs:
         include:
           - version: 7.1 
             platform: apollolake
-            KVER: '4.4.108'
+            KVER: '4'
           #- version: 7.1
           #  platform: broadwell
-          #  KVER: '4.4.108'
+          #  KVER: '4'
           #- version: 7.1 
           # platform: broadwellnk
-          #  KVER: '4.4.108'
+          #  KVER: '4'
           #- version: 7.1 
           #  platform: bromolow
-          #  KVER: '4.4.108'
+          #  KVER: '4'
           #- version: 7.1
           #  platform: denverton
-          #  KVER: '4.4.108'
+          #  KVER: '4'
           #- version: 7.1 
           #  platform: geminilake
-          #  KVER: '4.4.108'
+          #  KVER: '4'
           #- version: 7.1
           #  platform: r1000
-          #  KVER: '4.4.108'
+          #  KVER: '4'
           #- version: 7.1
           #  platform: v1000
-          #  KVER: '4.4.108'
+          #  KVER: '4'
           #- version: 7.1 
           #  platform: purley
-          #  KVER: '4.4.108'
+          #  KVER: '4'
           #- version: 7.1
           #  platform: braswell
-          #  KVER: '4.4.108'
+          #  KVER: '4'
           #- version: 7.1 
           #  platform: broadwellnkv2
-          #  KVER: '4.4.108'
+          #  KVER: '4'
           #- version: 7.1 
           #  platform: broadwellntbap
-          #  KVER: '4.4.108'
+          #  KVER: '4'
           - version: 7.1 
             platform: epyc7002
-            KVER: '5.10.55'
+            KVER: '5'
 
     steps:
       - name: Checkout repository
