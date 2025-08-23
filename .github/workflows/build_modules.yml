@@ -7,7 +7,7 @@
 # 수정된 버전: chroot 환경을 올바르게 사용하여 빌드
 #
 
-name: Build modules
+name: Build modules (chroot)
 
 on:
   workflow_dispatch:
