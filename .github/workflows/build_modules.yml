@@ -37,7 +37,7 @@ jobs:
         run: |
           DIR=source/input
           PLATFORM=${{ matrix.platform }}
-          docker run -u "$(id -u)" --rm -t \
+          docker run --rm -t \
             -v "${PWD}/${DIR}":/tmp/input:rw \
             -v "${PWD}/tmp/${PLATFORM}-${KVER}":/tmp/output:rw \
             dante90/syno-compiler:${TOOLKIT_VER} \
