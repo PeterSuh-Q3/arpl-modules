@@ -1,9 +1,8 @@
-# Copyright (C) 2022 Ing
+# Copyright (C) PeterSuh-Q3
 # This is free software, licensed under the MIT License.
 # See /LICENSE for more information.
-# 소스 경로 수정 버전
 
-name: Build modules (chroot)
+name: Build modules (public docker)
 
 on:
   workflow_dispatch:
