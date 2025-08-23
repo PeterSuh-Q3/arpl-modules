@@ -32,40 +32,30 @@ jobs:
           git config --global user.name "github-actions[bot]"
           sudo timedatectl set-timezone "Asia/Seoul"
 
-      - name: Get Src
+      - name: Prepare Source
         run: |
-          MAJOR=$(echo "${{ env.KVER }}" | cut -d. -f1)
-          cp -a src/${MAJOR}.x source/input
+          MAJOR=$(echo "${KVER}" | cut -d. -f1)
+          mkdir -p source/input source/output
+          cp -a src/${MAJOR}.x/* source/input/
 
       - name: Build Modules inside Chroot
         run: |
-          sudo chroot /opt/build_env/ds.${{ matrix.platform }}-${{ matrix.version }} << 'EOF'
-            # chroot 내부에서 빌드
+          # chroot 내부에서 빌드
+          sudo chroot /opt/build_env/ds.${{ matrix.platform }}-${{ matrix.version }} /bin/bash -eux << 'EOF'
             cd /source/input
-            make -j$(nproc) M=$(pwd) modules
+            make -j"$(nproc)" M="$(pwd)" modules
+            # 모듈 스트립 및 출력 디렉터리로 복사
+            find . -name '*.ko' -exec strip -g {} \; -exec cp {} /source/output/ \;
           EOF
 
-          # 빌드된 모듈(.ko) 스트립 및 복사
-          while read F; do
-              strip -g "${F}"
-              echo "Copying $(basename ${F})"
-              cp "${F}" "/source/output"
-          done < <(find . -name '*.ko')
-          EOF
+          # chroot 외부의 source/output 로 복사 (컨테이너 내부 경로)
+          sudo cp -a /opt/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}/source/output/. source/output/
+          sudo chmod -R a+rw source/output/
 
-          # 빌드 결과물을 호스트로 복사
-          sudo cp -a ${ROOT_PATH}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}/source/output/. ${ROOT_PATH}/source/output/
-          sudo chmod a+rw -R ${ROOT_PATH}/source/output
-
-      - name: Tar to Artifacts
+      - name: Package Artifacts
         run: |
-          ROOT_PATH=${{ github.workspace }}
-          PARTY3RD_PATH="${ROOT_PATH}/thirdparty/${{ matrix.platform }}-${{ env.KVER }}"
-          [ -d "${PARTY3RD_PATH}" ] && cp -rf "${PARTY3RD_PATH}/." "${ROOT_PATH}/source/output"
-
-          # 빌드된 파일이 있을 경우에만 아카이브 생성
-          if [ -n "$(ls -A ${ROOT_PATH}/source/output)" ]; then
-            sudo tar caf ${ROOT_PATH}/source/${{ matrix.platform }}-${{ env.KVER }}.tgz -C ${ROOT_PATH}/source/output .
+          if [ -n "$(ls -A source/output 2>/dev/null)" ]; then
+            tar caf source/${{ matrix.platform }}-${{ env.KVER }}.tgz -C source/output .
           else
             echo "No modules built, skipping archival."
           fi
@@ -74,5 +64,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: modules
-          path: ${{ github.workspace }}/source/*.tgz
+          path: source/*.tgz
           if-no-files-found: warn
