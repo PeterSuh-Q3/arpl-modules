@@ -10,179 +10,36 @@ on:
 
 jobs:
   build:
+    container: ghcr.io/petersuh-q3/arpl-modules-multi:7.2-v1000nk  
+    runs-on: ubuntu-latest    
     strategy:
       matrix:
         include:
           - version: "7.2"
             platform: v1000nk
-
-    runs-on: ubuntu-latest
-
+            
     steps:
       - name: Checkout
-        uses: actions/checkout@main
+        uses: actions/checkout@v3
 
       - name: Init Env
         run: |
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
-          sudo timedatectl set-timezone "Asia/Shanghai"
-
-      - name: Cache EnvDeploy
-        id: cache-env
-        uses: actions/cache@v4
-        with:
-          path: |
-            ${{ github.workspace }}/pkgscripts-ng
-            ${{ github.workspace }}/build_env
-          key: ds.${{ matrix.platform }}-${{ matrix.version }}-v2
-
-      - name: Get EnvDeploy (Setup Chroot)
-        if: ${{ steps.cache-env.outputs.cache-hit != 'true' }}
-        run: |
-          ROOT_PATH=${{ github.workspace }}
-          ENV_PATH=${ROOT_PATH}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}
-
-          echo "Setting up new chroot environment..."
-          git clone https://github.com/SynologyOpenSource/pkgscripts-ng.git ${ROOT_PATH}/pkgscripts-ng
-          cd ${ROOT_PATH}/pkgscripts-ng
-          git checkout DSM${{ matrix.version }}$( [ "${{ matrix.version }}" = "6.2" ] && echo ".4" )
-
-          echo "Deploying Synology build environment..."
-          sudo ./EnvDeploy -q -v ${{ matrix.version }} -p ${{ matrix.platform }}
-          sudo cp -al ${ROOT_PATH}/pkgscripts-ng ${ENV_PATH}/
-
-          echo "Generating and extracting KVER/CCVER..."
-          sudo chroot ${ENV_PATH} << "EOF"
-          cd pkgscripts
-          version=${{ matrix.version }}; [ ${version:0:1} -gt 6 ] && sed -i 's/print(" ".join(kernels))/pass #&/' ProjectDepends.py
-          sed -i '/PLATFORM_FAMILY/a\\techo "PRODUCT=$PRODUCT" >> $file\n\techo "KSRC=$KERNEL_SEARCH_PATH" >> $file\n\techo "LINUX_SRC=$KERNEL_SEARCH_PATH" >> $file' include/build
-          ./SynoBuild -c -p ${{ matrix.platform }}
-          while read line; do if [ ${line:0:1} != "#" ]; then export ${line%%=*}="${line#*=}"; fi; done < /env${BUILD_ARCH}.mak
-          if [ -f "${KSRC}/Makefile" ]; then
-            [ "${{ matrix.version }}" == "7.2" ] && sed -i 's/--param=allow-store-data-races=0/--allow-store-data-races/g' ${KSRC}/Makefile
-            VERSION=$(cat ${KSRC}/Makefile | grep ^VERSION | awk -F' ' '{print $3}')
-            PATCHLEVEL=$(cat ${KSRC}/Makefile | grep ^PATCHLEVEL | awk -F' ' '{print $3}')
-            SUBLEVEL=$(cat ${KSRC}/Makefile | grep ^SUBLEVEL | awk -F' ' '{print $3}')
-            KVER_DETECTED="${VERSION}.${PATCHLEVEL}.${SUBLEVEL}"
-            CCVER_DETECTED=$($CC --version | head -n 1 | awk -F' ' '{print $3}')
-            [ -f "/env32.mak" ] && echo "KVER=${KVER_DETECTED}" >> /env32.mak && echo "CCVER=${CCVER_DETECTED}" >> /env32.mak
-            [ -f "/env64.mak" ] && echo "KVER=${KVER_DETECTED}" >> /env64.mak && echo "CCVER=${CCVER_DETECTED}" >> /env64.mak
-          fi
-          EOF
-
-      - name: Extract Env Vars
-        id: extract-vars
-        run: |
-          ROOT_PATH=${{ github.workspace }}
-          ENV_PATH=${ROOT_PATH}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}
-          
-          if [ -f "${ENV_PATH}/env64.mak" ]; then
-            ENV_FILE="${ENV_PATH}/env64.mak"
-          elif [ -f "${ENV_PATH}/env32.mak" ]; then
-            ENV_FILE="${ENV_PATH}/env32.mak"
-          else
-            echo "::error::Cannot find env mak file in ${ENV_PATH}"
-            echo "Available files in ENV_PATH:"
-            ls -la "${ENV_PATH}/" || echo "ENV_PATH directory does not exist"
-            exit 1
-          fi
-
-          echo "Reading env vars from ${ENV_FILE}"
-          KVER=$(grep 'KVER=' ${ENV_FILE} | awk -F'=' '{print $2}')
-          CCVER=$(grep 'CCVER=' ${ENV_FILE} | awk -F'=' '{print $2}')
-
-          if [ -z "${KVER}" ] || [ -z "${CCVER}" ]; then
-            echo "::error::KVER or CCVER is empty. KVER=${KVER}, CCVER=${CCVER}"
-            exit 1
-          fi
-
-          echo "Detected KVER=${KVER}"
-          echo "Detected CCVER=${CCVER}"
-          echo "KVER=${KVER}" >> $GITHUB_ENV
-          echo "CCVER=${CCVER}" >> $GITHUB_ENV
+          sudo timedatectl set-timezone "Asia/Seoul"
 
       - name: Get Src
         run: |
-          ROOT_PATH=${{ github.workspace }}
-          mkdir -p ${ROOT_PATH}/source/output
-          
-          echo "Using KVER=${{ env.KVER }}"
-          if [ -z "${{ env.KVER }}" ]; then
-            echo "::error::Kernel version (KVER) is still not set. Aborting."
-            exit 1
-          fi
-
-          # KVER에서 메이저 버전 추출 (5.10.55 -> 5)
-          MAJOR_VERSION=$(echo "${{ env.KVER }}" | cut -d. -f1)
-          echo "Major kernel version: ${MAJOR_VERSION}"
-          
-          # 올바른 소스 경로 사용
-          SRC_PATH="${ROOT_PATH}/src/${MAJOR_VERSION}.x"
-          echo "Source path: ${SRC_PATH}"
-          
-          if [ ! -d "${SRC_PATH}" ]; then
-            echo "::error::Source directory ${SRC_PATH} not found"
-            echo "Available directories in src/:"
-            ls -la "${ROOT_PATH}/src/" || echo "src directory does not exist"
-            exit 1
-          fi
-
-          sudo cp -a "${SRC_PATH}" "${ROOT_PATH}/source/input"
-          sudo cp -a ${ROOT_PATH}/source ${ROOT_PATH}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}/
+          MAJOR=$(echo "${{ env.KVER }}" | cut -d. -f1)
+          cp -a src/${MAJOR}.x source/input
 
       - name: Build Modules inside Chroot
         run: |
-          ROOT_PATH=${{ github.workspace }}
-          echo "Starting build process inside chroot for KVER ${{ env.KVER }}..."
-          sudo chroot build_env/ds.${{ matrix.platform }}-${{ matrix.version }} << "EOF"
-          # Synology 빌드 환경 변수 로드
-          if [ -f "/env64.mak" ]; then
-              while read line; do if [ "${line:0:1}" != "#" ]; then export ${line%%=*}="${line#*=}"; fi; done < /env64.mak
-          elif [ -f "/env32.mak" ]; then
-              while read line; do if [ "${line:0:1}" != "#" ]; then export ${line%%=*}="${line#*=}"; fi; done < /env32.mak
-          fi
-
-          # Retpoline 플래그 추가
-          CUSTOM_CFLAGS="-mindirect-branch=thunk-inline -mindirect-branch-register -fno-jump-tables"
-          export CFLAGS="$CFLAGS $CUSTOM_CFLAGS"
-          export CXXFLAGS="$CXXFLAGS $CUSTOM_CFLAGS"
-
-          cd /source/input
-
-          # Makefile 수정
-          [ -z "$(grep 'env.mak' Makefile)" ] && sed -i '1 i include /env.mak' Makefile
-
-          # 플랫폼별 빌드 파라미터 로드
-          if [ -f "defines.${{ matrix.platform }}" ]; then
-              PARMS=$(cat "defines.${{ matrix.platform }}" | xargs)
-          fi
-
-          # 패치 1: phy.c 컴파일 오류 해결
-          PHY_C_FILE="/source/input/drivers/net/phy/phy.c"
-          if [ -f "$PHY_C_FILE" ]; then
-              echo "Patching phy.c for static declaration errors..."
-              sed -i 's/^static void phy_trigger_machine/void phy_trigger_machine/' "$PHY_C_FILE"
-              sed -i 's/^static void phy_error/void phy_error/' "$PHY_C_FILE"
-          fi
-
-          # 패치 2: phy-core.c 컴파일 오류 해결
-          PHY_CORE_C_FILE="/source/input/drivers/net/phy/phy-core.c"
-          if [ -f "$PHY_CORE_C_FILE" ]; then
-              echo "Applying corrected patch to phy-core.c..."
-              sed -i 's/static int __set_linkmode_max_speed/static void __set_linkmode_max_speed/' "$PHY_CORE_C_FILE"
-              sed -i 's/int phy_set_max_speed(struct phy_device \*phydev, u32 max_speed)/void phy_set_max_speed(struct phy_device *phydev, u32 max_speed)/' "$PHY_CORE_C_FILE"
-              sed -i '/^static void __set_linkmode_max_speed/,/}/ s/^\s*return \(err\|0\);/;/g' "$PHY_CORE_C_FILE"
-              sed -i '/^void phy_set_max_speed/,/}/ s/^\s*return \(err\|0\);/;/g' "$PHY_CORE_C_FILE"
-              sed -i 's/return __set_linkmode_max_speed(max_speed, phydev->supported);/__set_linkmode_max_speed(max_speed, phydev->supported); return 0;/' "$PHY_CORE_C_FILE"
-              sed -i 's/return __set_linkmode_max_speed(min_common_speed, phydev->advertising);/__set_linkmode_max_speed(min_common_speed, phydev->advertising); return 0;/' "$PHY_CORE_C_FILE"
-              sed -i 's/return phy_set_max_speed(phydev, cmd->base.speed);/phy_set_max_speed(phydev, cmd->base.speed); return 0;/' "$PHY_CORE_C_FILE"
-          fi
-
-          # chroot 환경의 툴체인을 사용하여 빌드 실행
-          echo "Kernel Source Path (KSRC): ${KSRC}"
-          echo "Compiler (CC): $CC"
-          make -j$(nproc) -C "${KSRC}" M="${PWD}" ${PARMS} modules
+          sudo chroot /opt/build_env/ds.${{ matrix.platform }}-${{ matrix.version }} << 'EOF'
+            # chroot 내부에서 빌드
+            cd /source/input
+            make -j$(nproc) M=$(pwd) modules
+          EOF
 
           # 빌드된 모듈(.ko) 스트립 및 복사
           while read F; do
