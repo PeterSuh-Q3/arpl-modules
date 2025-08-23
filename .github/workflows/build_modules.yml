@@ -8,18 +8,16 @@ name: Build modules (chroot)
 on:
   workflow_dispatch:
 
-permissions:
-  contents: read         # 코드 체크아웃용
-  packages: none 
-
 env:
   # KERNEL_VERSION을 Matrix나 입력 파라미터로 정의하세요.
   KVER: "5.10.55"
 
 jobs:
   build:
-    container: ghcr.io/petersuh-q3/arpl-modules-multi:7.2-v1000nk  
     runs-on: ubuntu-latest    
+    permissions:
+      contents: read         # 코드 체크아웃용
+      packages: read
     strategy:
       matrix:
         include:
@@ -36,13 +34,13 @@ jobs:
           mkdir -p source/input source/output
           cp -a src/${MAJOR}.x/* source/input/
 
-      - name: Log into GitHub Package Registry
-        env:
-          GHCR_PAT: ${{ secrets.GHCR_PAT }}
-        run: echo "${GHCR_PAT}" | docker login ghcr.io \
-          --username ${{ github.actor }} \
-          --password-stdin
-
+      - name: Log in to GHCR
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_PAT }}
+          
       - name: Pull Build Container
         run: docker pull ghcr.io/petersuh-q3/arpl-modules-multi:7.2-v1000nk
 
