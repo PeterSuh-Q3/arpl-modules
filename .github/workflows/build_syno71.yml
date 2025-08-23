@@ -68,12 +68,12 @@ jobs:
           cp -a src/${MAJOR}.x/* src/input/
 
       - name: Grant execute on syno71.sh
-        run: chmod +x src/syno71.sh ${{ matrix.version }} ${{ matrix.platform }} ${{ matrix.KVER }}
+        run: chmod +x src/syno71.sh
 
       - name: Compile modules via syno71.sh
         run: |
           cd src
-          sudo ./syno71.sh 
+          sudo ./syno71.sh  ${{ matrix.version }} ${{ matrix.platform }} ${{ matrix.KVER }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
