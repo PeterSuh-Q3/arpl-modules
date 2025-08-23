@@ -32,7 +32,8 @@ jobs:
 
       - name: Compile modules via kver5.sh
         run: |
-          sh src/kver5.sh
+          cd src
+          ./kver5.sh
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
