@@ -32,7 +32,7 @@ jobs:
 
       - name: Compile modules via kver5.sh
         run: |
-          /github/workspace/src/kver5.sh
+          sh src/kver5.sh
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
