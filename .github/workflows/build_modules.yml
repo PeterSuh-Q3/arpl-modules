@@ -137,17 +137,30 @@ jobs:
           fi
       
           # =================================================================
-          # 변경점 2: phy-core.c 컴파일 오류를 해결하기 위한 강화된 패치
+          # 변경점 2: phy-core.c 컴파일 오류를 해결하기 위한 수정된 패치
           # =================================================================
           PHY_CORE_C_FILE="/source/input/drivers/net/phy/phy-core.c"
           if [ -f "$PHY_CORE_C_FILE" ]; then
-              echo "Patching phy-core.c for conflicting types and missing return errors..."
-              # 함수 반환 타입을 int -> void로 변경하여 'no return' 오류 해결
+              echo "Applying corrected patch to phy-core.c..."
+          
+              # 1. 원본 패치에서 시도했던 함수들의 반환 타입을 int -> void로 변경합니다.
+              #    이는 일부 함수에서 모든 경로에 return문이 없어 발생하는 컴파일 오류를 방지합니다.
               sed -i 's/static int __set_linkmode_max_speed/static void __set_linkmode_max_speed/' "$PHY_CORE_C_FILE"
               sed -i 's/int phy_set_max_speed(struct phy_device \*phydev, u32 max_speed)/void phy_set_max_speed(struct phy_device *phydev, u32 max_speed)/' "$PHY_CORE_C_FILE"
+          
+              # 2. void로 변경된 함수 내부에 남아있을 수 있는 불필요한 'return' 구문을 제거합니다.
+              #    기존의 광범위한 방식 대신, 함수 내에서만 동작하도록 수정하여 안전성을 높였습니다.
+              sed -i '/^static void __set_linkmode_max_speed/,/}/ s/^\s*return \(err\|0\);/;/g' "$PHY_CORE_C_FILE"
+              sed -i '/^void phy_set_max_speed/,/}/ s/^\s*return \(err\|0\);/;/g' "$PHY_CORE_C_FILE"
+          
+              # 3. void로 변경된 함수를 호출하는 곳에서 'return'을 제거하고,
+              #    대신 호출 함수가 정상적으로 값을 반환하도록 'return 0;'를 추가합니다.
+              #    이것이 로그에 나타난 핵심 오류 두 가지를 모두 해결합니다.
+              sed -i 's/return __set_linkmode_max_speed(max_speed, phydev->supported);/__set_linkmode_max_speed(max_speed, phydev->supported); return 0;/' "$PHY_CORE_C_FILE"
+              sed -i 's/return __set_linkmode_max_speed(min_common_speed, phydev->advertising);/__set_linkmode_max_speed(min_common_speed, phydev->advertising); return 0;/' "$PHY_CORE_C_FILE"
               
-              # void로 변경된 함수 내 불필요한 return 구문('return err;' 및 'return 0;') 제거
-              sed -i '/^\s*return \(err\|0\);/d' "$PHY_CORE_C_FILE"
+              # 4. phy_set_max_speed 함수를 호출하는 부분도 동일한 문제가 발생할 수 있으므로 함께 수정합니다.
+              sed -i 's/return phy_set_max_speed(phydev, cmd->base.speed);/phy_set_max_speed(phydev, cmd->base.speed); return 0;/' "$PHY_CORE_C_FILE"
           fi
       
           # chroot 환경의 툴체인을 사용하여 빌드 실행
