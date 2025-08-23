@@ -127,7 +127,7 @@ jobs:
           fi
           
           # =================================================================
-          # 변경점 1: phy.c 컴파일 오류를 해결하기 위한 패치 추가
+          # 변경점 1: phy.c 컴파일 오류를 해결하기 위한 패치
           # =================================================================
           PHY_C_FILE="/source/input/drivers/net/phy/phy.c"
           if [ -f "$PHY_C_FILE" ]; then
@@ -137,13 +137,17 @@ jobs:
           fi
       
           # =================================================================
-          # 변경점 2: phy-core.c의 함수 타입 불일치 오류 해결을 위한 패치 추가
+          # 변경점 2: phy-core.c 컴파일 오류를 해결하기 위한 강화된 패치
           # =================================================================
           PHY_CORE_C_FILE="/source/input/drivers/net/phy/phy-core.c"
           if [ -f "$PHY_CORE_C_FILE" ]; then
-              echo "Patching phy-core.c for conflicting types error..."
+              echo "Patching phy-core.c for conflicting types and missing return errors..."
+              # 함수 반환 타입을 int -> void로 변경하여 'no return' 오류 해결
+              sed -i 's/static int __set_linkmode_max_speed/static void __set_linkmode_max_speed/' "$PHY_CORE_C_FILE"
               sed -i 's/int phy_set_max_speed(struct phy_device \*phydev, u32 max_speed)/void phy_set_max_speed(struct phy_device *phydev, u32 max_speed)/' "$PHY_CORE_C_FILE"
-              sed -i '/^\s*return 0;/d' "$PHY_CORE_C_FILE"
+              
+              # void로 변경된 함수 내 불필요한 return 구문('return err;' 및 'return 0;') 제거
+              sed -i '/^\s*return \(err\|0\);/d' "$PHY_CORE_C_FILE"
           fi
       
           # chroot 환경의 툴체인을 사용하여 빌드 실행
@@ -185,14 +189,13 @@ jobs:
       # =================================================================
       # 변경점 2: 기존 Clean 단계를 제거하고, 항상 실행되는 공식 클린업 단계 추가
       # =================================================================
-      - name: Clean up chroot environment
-        # 이 단계는 빌드 성공/실패 여부와 관계없이 항상 실행되어 마운트를 해제합니다.
+      - name: Clean up chroot
         if: always()
         run: |
           ROOT_PATH=${{ github.workspace }}
           if [ -d "${ROOT_PATH}/pkgscripts-ng" ]; then
             echo "Cleaning up chroot environment using EnvDeploy..."
             cd ${ROOT_PATH}/pkgscripts-ng
-            sudo ./EnvDeploy -v ${{ matrix.version }} -p ${{ matrix.platform }} --clean
+            # '--clean'을 올바른 옵션인 '-c'로 수정
+            sudo ./EnvDeploy -v ${{ matrix.version }} -p ${{ matrix.platform }} -c
           fi
-
