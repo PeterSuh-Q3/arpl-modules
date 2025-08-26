@@ -2,13 +2,10 @@
 # This is free software, licensed under the MIT License.
 # See /LICENSE for more information.
 
-name: Build modules with syno71.sh
+name: Build & Release Synology Modules
 
 on:
   workflow_dispatch:
-
-permissions:
-  contents: read
 
 jobs:
   build:
@@ -76,9 +73,37 @@ jobs:
       #      sudo ./syno71.sh 7.1 $platform $KVER
       #    done
 
-      - name: Upload artifacts
+      # 아티팩트 이름별 tgz 생성
+      - name: Pack build output
+        run: |
+          cd output
+          if [ "${{ matrix.platform }}" = "epyc7002" ]; then
+            tar czf ${{ matrix.platform }}-${{ matrix.version }}-${{ matrix.KVER }}.tgz *
+          else
+            tar czf ${{ matrix.platform }}-${{ matrix.KVER }}.tgz *
+          fi
+          
+      # 릴리즈 아티팩트 업로드
+      - name: Upload tgz artifact
         uses: actions/upload-artifact@v4
         with:
-          name: modules-${{ matrix.platform }}-${{ matrix.KVER }}
-          path: output/*
+          name: >-
+            ${{ matrix.platform }}-${{ (
+              matrix.platform == 'epyc7002'
+              ) && format('{0}-{1}-{2}', matrix.platform, matrix.version, matrix.KVER)
+              || format('{0}-{1}', matrix.platform, matrix.KVER) }}
+          path: |
+            output/${{ matrix.platform }}-${{ matrix.KVER }}.tgz
+            output/${{ matrix.platform }}-${{ matrix.version }}-${{ matrix.KVER }}.tgz
           if-no-files-found: warn
+
+      # 퍼블리시 릴리즈 (태그명 지정, description에 빌드정보 추가 등을 자동화 가능)
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            output/${{ matrix.platform }}-${{ matrix.KVER }}.tgz
+            output/${{ matrix.platform }}-${{ matrix.version }}-${{ matrix.KVER }}.tgz
+          tag_name: synology-modules-${{ matrix.platform }}-${{ matrix.version }}-${{ matrix.KVER }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
