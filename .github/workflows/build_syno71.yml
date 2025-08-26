@@ -14,12 +14,12 @@ jobs:
   build:
     runs-on: ubuntu-latest
     
-    strategy:
-      matrix:
-        include:
-          - version: 7.1 
-            platform: apollolake
-            KVER: '4.4.180'
+    #strategy:
+      #matrix:
+        #include:
+          #- version: 7.1 
+          #  platform: apollolake
+          #  KVER: '4.4.180'
           #- version: 7.1
           #  platform: broadwell
           #  KVER: '4.4.180'
@@ -53,9 +53,9 @@ jobs:
           #- version: 7.1 
           #  platform: broadwellntbap
           #  KVER: '4.4.180'
-          - version: 7.1 
-            platform: epyc7002
-            KVER: '5.10.55'
+          #- version: 7.1 
+          #  platform: epyc7002
+          #  KVER: '5.10.55'
 
     steps:
       - name: Checkout repository
@@ -64,8 +64,19 @@ jobs:
       - name: Grant execute on syno71.sh
         run: chmod +x src/syno71.sh
 
-      - name: Compile modules via syno71.sh
+      - name: Build modules for multiple platforms
         run: |
+          cd src
+          for platform in apollolake broadwell broadwellnk denverton geminilake r1000 v1000 purley braswell broadwellnkv2 broadwellntbap epyc7002 ; do
+            KVER=""
+            if [ "$platform" = "epyc7002" ]; then 
+              KVER="5.10.55"
+            else  
+              KVER="4.4.180"
+            fi
+            sudo ./syno71.sh 7.1 $platform $KVER
+          done
+        
           cd src
           sudo ./syno71.sh  ${{ matrix.version }} ${{ matrix.platform }} ${{ matrix.KVER }}
 
