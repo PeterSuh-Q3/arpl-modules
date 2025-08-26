@@ -5,6 +5,8 @@
 name: Build & Release Synology Modules
 
 on:
+  release:
+    types: [published]
   workflow_dispatch:
 
 jobs:
