@@ -27,9 +27,6 @@ jobs:
           # platform: broadwellnk
           #  KVER: '4.4.180'
           #- version: 7.1 
-          #  platform: bromolow
-          #  KVER: '4.4.180'
-          #- version: 7.1
           #  platform: denverton
           #  KVER: '4.4.180'
           #- version: 7.1 
@@ -45,9 +42,6 @@ jobs:
           #  platform: purley
           #  KVER: '4.4.180'
           #- version: 7.1
-          #  platform: braswell
-          #  KVER: '4.4.180'
-          #- version: 7.1 
           #  platform: broadwellnkv2
           #  KVER: '4.4.180'
           #- version: 7.1 
@@ -67,7 +61,7 @@ jobs:
       - name: Build modules for multiple platforms
         run: |
           cd src
-          for platform in apollolake broadwell broadwellnk denverton geminilake r1000 v1000 purley braswell broadwellnkv2 broadwellntbap epyc7002 ; do
+          for platform in apollolake broadwell broadwellnk denverton geminilake r1000 v1000 purley broadwellnkv2 broadwellntbap epyc7002 ; do
             KVER=""
             if [ "$platform" = "epyc7002" ]; then 
               KVER="5.10.55"
