@@ -19,12 +19,12 @@ jobs:
           - version: 7.1 
             platform: avoton
             KVER: '3.10.108'
-          - version: 7.1
-            platform: braswell
-            KVER: '3.10.108'
-          - version: 7.1
-            platform: cedarview
-            KVER: '3.10.108'
+          #- version: 7.1
+          #  platform: braswell
+          #  KVER: '3.10.108'
+          #- version: 7.1
+          #  platform: cedarview
+          #  KVER: '3.10.108'
           #- version: 7.1 
           # platform: broadwellnk
           #  KVER: '4.4.180'
