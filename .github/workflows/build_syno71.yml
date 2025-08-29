@@ -111,22 +111,24 @@ jobs:
         with:
           name: ${{ matrix.platform }}-${{ matrix.KVER }}
           path: |
-            if [ "${{ matrix.platform }}" = "epyc7002" ]; then          
-              ${ROOT_PATH}/output/${{ matrix.platform }}-${{ matrix.version }}-${{ matrix.KVER }}.tgz
+            if [ "${{ matrix.platform }}" = "epyc7002" ]; then     
+              PLATFORM_FILE="${{ matrix.platform }}-${{ matrix.version }}-${{ matrix.KVER }}.tgz"
             else  
-              ${ROOT_PATH}/output/${{ matrix.platform }}-${{ matrix.KVER }}.tgz
+              PLATFORM_FILE="${{ matrix.platform }}-${{ matrix.KVER }}.tgz"
             fi  
+            ${ROOT_PATH}/output/${PLATFORM_FILE}.tgz
           if-no-files-found: warn
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            if [ "${{ matrix.platform }}" = "epyc7002" ]; then                    
-              ${ROOT_PATH}/output/${{ matrix.platform }}-${{ matrix.version }}-${{ matrix.KVER }}.tgz
+            if [ "${{ matrix.platform }}" = "epyc7002" ]; then     
+              PLATFORM_FILE="${{ matrix.platform }}-${{ matrix.version }}-${{ matrix.KVER }}.tgz"
             else  
-              ${ROOT_PATH}/output/${{ matrix.platform }}-${{ matrix.KVER }}.tgz
+              PLATFORM_FILE="${{ matrix.platform }}-${{ matrix.KVER }}.tgz"
             fi  
+            ${ROOT_PATH}/output/${PLATFORM_FILE}.tgz
           tag_name: synology-modules-${{ matrix.platform }}-${{ matrix.KVER }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
