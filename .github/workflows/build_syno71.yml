@@ -84,14 +84,17 @@ jobs:
           VERSION: ${{ matrix.version }}
           KVER: ${{ matrix.KVER }}
         run: |
+          ROOT_PATH=${{ github.workspace }}
+          mkdir -p ${ROOT_PATH}/output
+          
           PLATFORM_DIR="${PLATFORM}-${VERSION}-${KVER}"
-          cd output
+          cd ${ROOT_PATH}/output
           # tgz 파일명 예외 처리(epyc7002)
           if [ "${PLATFORM}" = "epyc7002" ]; then
-            tar czf "${PLATFORM}-${VERSION}-${KVER}.tgz" "${PLATFORM_DIR}"
+            tar czf "${ROOT_PATH}/output/${PLATFORM}-${VERSION}-${KVER}.tgz" "${ROOT_PATH}/${PLATFORM_DIR}"
           else
             PLATFORM_DIR="${PLATFORM}-${KVER}"
-            tar czf "${PLATFORM_DIR}.tgz" "${PLATFORM_DIR}"
+            tar czf "${ROOT_PATH}/output/${PLATFORM_DIR}.tgz" "${ROOT_PATH}/${PLATFORM_DIR}"
           fi
 
       - name: Upload tgz artifact
@@ -99,16 +102,16 @@ jobs:
         with:
           name: ${{ matrix.platform }}-${{ matrix.KVER }}
           path: |
-            output/${{ matrix.platform }}-${{ matrix.version }}-${{ matrix.KVER }}.tgz
-            output/${{ matrix.platform }}-${{ matrix.KVER }}.tgz
+            ${ROOT_PATH}/output/${{ matrix.platform }}-${{ matrix.version }}-${{ matrix.KVER }}.tgz
+            ${ROOT_PATH}/output/${{ matrix.platform }}-${{ matrix.KVER }}.tgz
           if-no-files-found: warn
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            output/${{ matrix.platform }}-${{ matrix.version }}-${{ matrix.KVER }}.tgz
-            output/${{ matrix.platform }}-${{ matrix.KVER }}.tgz
+            ${ROOT_PATH}/output/${{ matrix.platform }}-${{ matrix.version }}-${{ matrix.KVER }}.tgz
+            ${ROOT_PATH}/output/${{ matrix.platform }}-${{ matrix.KVER }}.tgz
           tag_name: synology-modules-${{ matrix.platform }}-${{ matrix.version }}-${{ matrix.KVER }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
