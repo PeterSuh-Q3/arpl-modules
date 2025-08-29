@@ -103,7 +103,8 @@ jobs:
           else
             PLATFORM_DIR="${PLATFORM}-${KVER}"
           fi
-          sudo tar czf "${ROOT_PATH}/output/${PLATFORM_DIR}.tgz" ${ROOT_PATH}/${PLATFORM_DIR}/*.ko          
+          sudo tar -zcvf "${ROOT_PATH}/output/${PLATFORM_DIR}.tgz" ${ROOT_PATH}/${PLATFORM_DIR}/*.ko
+          sudo ls -la "${ROOT_PATH}/output/"
 
       - name: Upload tgz artifact
         uses: actions/upload-artifact@v4
