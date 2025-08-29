@@ -98,7 +98,7 @@ jobs:
             PLATFORM_DIR="${PLATFORM}-${KVER}"
           fi
           ls -la "${ROOT_PATH}/${PLATFORM_DIR}"
-          ls -prt "${ROOT_PATH}
+          ls -prt "${ROOT_PATH}"
           sudo tar czf "${ROOT_PATH}/output/${PLATFORM_DIR}.tgz" "${ROOT_PATH}/${PLATFORM_DIR}"          
 
       - name: Upload tgz artifact
