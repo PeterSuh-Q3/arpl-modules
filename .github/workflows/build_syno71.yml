@@ -60,6 +60,12 @@ jobs:
       - name: Grant execute on syno71.sh
         run: chmod +x src/syno71.sh
 
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKERHUB_USERNAME }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+      
+      - name: Pull and run compiler image
+        run: docker pull dante90/syno-compiler:7.1 && docker run ...
+  
       - name: Compile modules via syno71.sh
         run: |
           cd src
