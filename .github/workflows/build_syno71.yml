@@ -91,14 +91,15 @@ jobs:
           KVER: ${{ matrix.KVER }}
         run: |
           ROOT_PATH=${{ github.workspace }}
-          PLATFORM_DIR="${PLATFORM}-${VERSION}-${KVER}"
           cd ${ROOT_PATH}/output
           if [ "${PLATFORM}" = "epyc7002" ]; then
-            sudo tar czf "${ROOT_PATH}/output/${PLATFORM}-${VERSION}-${KVER}.tgz" "${ROOT_PATH}/${PLATFORM_DIR}"
+            PLATFORM_DIR="${PLATFORM}-${VERSION}-${KVER}"          
           else
             PLATFORM_DIR="${PLATFORM}-${KVER}"
-            sudo tar czf "${ROOT_PATH}/output/${PLATFORM_DIR}.tgz" "${ROOT_PATH}/${PLATFORM_DIR}"
           fi
+          ls -la "${ROOT_PATH}/${PLATFORM_DIR}"
+          ls -prt "${ROOT_PATH}
+          sudo tar czf "${ROOT_PATH}/output/${PLATFORM_DIR}.tgz" "${ROOT_PATH}/${PLATFORM_DIR}"          
 
       - name: Upload tgz artifact
         uses: actions/upload-artifact@v4
