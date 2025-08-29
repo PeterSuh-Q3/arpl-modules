@@ -106,30 +106,25 @@ jobs:
           sudo tar -zcvf "${ROOT_PATH}/output/${PLATFORM_DIR}.tgz" ${ROOT_PATH}/${PLATFORM_DIR}/*.ko
           sudo ls -la "${ROOT_PATH}/output/"
 
+      - name: Set platform file variable
+        run: |
+          if [ "${{ env.PLATFORM }}" = "epyc7002" ]; then
+            echo "PLATFORM_FILE=${{ matrix.platform }}-${{ matrix.version }}-${{ matrix.KVER }}.tgz" >> $GITHUB_ENV
+          else
+            echo "PLATFORM_FILE=${{ matrix.platform }}-${{ matrix.KVER }}.tgz" >> $GITHUB_ENV
+          fi
+
       - name: Upload tgz artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.platform }}-${{ matrix.KVER }}
-          path: |
-            if [ "${{ matrix.platform }}" = "epyc7002" ]; then     
-              PLATFORM_FILE="${{ matrix.platform }}-${{ matrix.version }}-${{ matrix.KVER }}.tgz"
-            else  
-              PLATFORM_FILE="${{ matrix.platform }}-${{ matrix.KVER }}.tgz"
-            fi  
-            ${ROOT_PATH}/output/${PLATFORM_FILE}.tgz
+          files: ${{ env.ROOT_PATH }}/output/${{ env.PLATFORM_FILE }}          
           if-no-files-found: warn
 
-      - name: Create GitHub Release
+      - name: Create release
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            if [ "${{ matrix.platform }}" = "epyc7002" ]; then     
-              PLATFORM_FILE="${{ matrix.platform }}-${{ matrix.version }}-${{ matrix.KVER }}.tgz"
-            else  
-              PLATFORM_FILE="${{ matrix.platform }}-${{ matrix.KVER }}.tgz"
-            fi  
-            ${ROOT_PATH}/output/${PLATFORM_FILE}.tgz
-          tag_name: synology-modules-${{ matrix.platform }}-${{ matrix.KVER }}
+          files: ${{ env.ROOT_PATH }}/output/${{ env.PLATFORM_FILE }}
+          tag_name: synology-modules-${{ matrix.platform }}-${{ matrix.KVER }}          
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          
