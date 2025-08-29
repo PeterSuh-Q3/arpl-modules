@@ -4,6 +4,9 @@
 
 name: Build & Release Synology Modules
 
+env:
+  ROOT_PATH: ${{ github.workspace }}
+
 on:
   release:
     types: [published]
@@ -63,8 +66,8 @@ jobs:
       - name: Log in to Docker Hub
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
       
-      #- name: Pull and run compiler image
-      #  run: docker pull dante90/syno-compiler:7.1 && docker run ...
+      - name: Pull and run compiler image
+        run: docker pull dante90/syno-compiler:7.1
   
       - name: Compile modules via syno71.sh
         run: |
@@ -84,47 +87,47 @@ jobs:
       #      sudo ./syno71.sh 7.1 $platform $KVER
       #    done
 
-      - name: Prepare output directory with proper permissions
+      - name: Pack build output
+        env:
+          ROOT_PATH: ${{ env.ROOT_PATH }}
+          PLATFORM: ${{ matrix.platform }}
+          VERSION: ${{ matrix.version }}
+          KVER: ${{ matrix.KVER }}
         run: |
-          ROOT_PATH=${{ github.workspace }}
           mkdir -p ${ROOT_PATH}/output
           sudo chmod -R 777 ${ROOT_PATH}/output
-
-      - name: Pack build output
+          cd ${ROOT_PATH}/output
+          if [ "${PLATFORM}" = "epyc7002" ]; then
+            PLATFORM_DIR="${PLATFORM}-${VERSION}-${KVER}"
+          else
+            PLATFORM_DIR="${PLATFORM}-${KVER}"
+          fi
+          sudo tar -zcvf "${ROOT_PATH}/output/${PLATFORM_DIR}.tgz" ${ROOT_PATH}/${PLATFORM_DIR}/*.ko
+          ls -la "${ROOT_PATH}/output/"
+    
+      - name: Set platform file variable
         env:
           PLATFORM: ${{ matrix.platform }}
           VERSION: ${{ matrix.version }}
           KVER: ${{ matrix.KVER }}
         run: |
-          ROOT_PATH=${{ github.workspace }}
-          cd ${ROOT_PATH}/output
           if [ "${PLATFORM}" = "epyc7002" ]; then
-            PLATFORM_DIR="${PLATFORM}-${VERSION}-${KVER}"          
+            echo "PLATFORM_FILE=${PLATFORM}-${VERSION}-${KVER}.tgz" >> $GITHUB_ENV
           else
-            PLATFORM_DIR="${PLATFORM}-${KVER}"
+            echo "PLATFORM_FILE=${PLATFORM}-${KVER}.tgz" >> $GITHUB_ENV
           fi
-          sudo tar -zcvf "${ROOT_PATH}/output/${PLATFORM_DIR}.tgz" ${ROOT_PATH}/${PLATFORM_DIR}/*.ko
-          sudo ls -la "${ROOT_PATH}/output/"
-
-      - name: Set platform file variable
-        run: |
-          if [ "${{ env.PLATFORM }}" = "epyc7002" ]; then
-            echo "PLATFORM_FILE=${{ matrix.platform }}-${{ matrix.version }}-${{ matrix.KVER }}.tgz" >> $GITHUB_ENV
-          else
-            echo "PLATFORM_FILE=${{ matrix.platform }}-${{ matrix.KVER }}.tgz" >> $GITHUB_ENV
-          fi
-
+    
       - name: Upload tgz artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.platform }}-${{ matrix.KVER }}
-          files: ${{ env.ROOT_PATH }}/output/${{ env.PLATFORM_FILE }}          
+          files: output/${{ env.PLATFORM_FILE }}
           if-no-files-found: warn
-
+    
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
-          files: ${{ env.ROOT_PATH }}/output/${{ env.PLATFORM_FILE }}
-          tag_name: synology-modules-${{ matrix.platform }}-${{ matrix.KVER }}          
+          files: output/${{ env.PLATFORM_FILE }}
+          tag_name: synology-modules-${{ matrix.platform }}-${{ matrix.KVER }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
