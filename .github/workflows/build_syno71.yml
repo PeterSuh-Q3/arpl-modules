@@ -63,8 +63,8 @@ jobs:
       - name: Log in to Docker Hub
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
       
-      - name: Pull and run compiler image
-        run: docker pull dante90/syno-compiler:7.1 && docker run ...
+      #- name: Pull and run compiler image
+      #  run: docker pull dante90/syno-compiler:7.1 && docker run ...
   
       - name: Compile modules via syno71.sh
         run: |
