@@ -78,6 +78,12 @@ jobs:
       #      sudo ./syno71.sh 7.1 $platform $KVER
       #    done
 
+      - name: Prepare output directory with proper permissions
+        run: |
+          ROOT_PATH=${{ github.workspace }}
+          mkdir -p ${ROOT_PATH}/output
+          sudo chmod -R 777 ${ROOT_PATH}/output
+
       - name: Pack build output
         env:
           PLATFORM: ${{ matrix.platform }}
@@ -85,16 +91,13 @@ jobs:
           KVER: ${{ matrix.KVER }}
         run: |
           ROOT_PATH=${{ github.workspace }}
-          mkdir -p ${ROOT_PATH}/output
-          
           PLATFORM_DIR="${PLATFORM}-${VERSION}-${KVER}"
           cd ${ROOT_PATH}/output
-          # tgz 파일명 예외 처리(epyc7002)
           if [ "${PLATFORM}" = "epyc7002" ]; then
-            tar czf "${ROOT_PATH}/output/${PLATFORM}-${VERSION}-${KVER}.tgz" "${ROOT_PATH}/${PLATFORM_DIR}"
+            sudo tar czf "${ROOT_PATH}/output/${PLATFORM}-${VERSION}-${KVER}.tgz" "${ROOT_PATH}/${PLATFORM_DIR}"
           else
             PLATFORM_DIR="${PLATFORM}-${KVER}"
-            tar czf "${ROOT_PATH}/output/${PLATFORM_DIR}.tgz" "${ROOT_PATH}/${PLATFORM_DIR}"
+            sudo tar czf "${ROOT_PATH}/output/${PLATFORM_DIR}.tgz" "${ROOT_PATH}/${PLATFORM_DIR}"
           fi
 
       - name: Upload tgz artifact
@@ -115,3 +118,4 @@ jobs:
           tag_name: synology-modules-${{ matrix.platform }}-${{ matrix.version }}-${{ matrix.KVER }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
