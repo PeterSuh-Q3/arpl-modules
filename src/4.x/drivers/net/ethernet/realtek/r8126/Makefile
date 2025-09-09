@@ -4,7 +4,7 @@
 # r8126 is the Linux device driver released for Realtek 5 Gigabit Ethernet
 # controllers with PCI-Express interface.
 #
-# Copyright(c) 2024 Realtek Semiconductor Corp. All rights reserved.
+# Copyright(c) 2025 Realtek Semiconductor Corp. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the Free
@@ -30,11 +30,9 @@
 #  US6,570,884, US6,115,776, and US6,327,625.
 ################################################################################
 
-CONFIG_SOC_LAN = n
+CONFIG_SOC_LAN = y
 ENABLE_FIBER_SUPPORT = n
 ENABLE_REALWOW_SUPPORT = n
-ENABLE_DASH_SUPPORT = n
-ENABLE_DASH_PRINTER_SUPPORT = n
 CONFIG_DOWN_SPEED_100 = n
 CONFIG_ASPM = y
 ENABLE_S5WOL = y
@@ -44,7 +42,6 @@ ENABLE_S0_MAGIC_PACKET = n
 ENABLE_TX_NO_CLOSE = y
 ENABLE_MULTIPLE_TX_QUEUE = n
 ENABLE_PTP_SUPPORT = n
-ENABLE_PTP_MASTER_MODE = n
 ENABLE_RSS_SUPPORT = n
 ENABLE_LIB_SUPPORT = n
 ENABLE_USE_FIRMWARE_FILE = n
@@ -53,6 +50,7 @@ DISABLE_MULTI_MSIX_VECTOR = n
 ENABLE_DOUBLE_VLAN = n
 ENABLE_PAGE_REUSE = n
 ENABLE_RX_PACKET_FRAGMENT = n
+ENABLE_GIGA_LITE = y
 
 ifneq ($(KERNELRELEASE),)
 	obj-m := r8126.o
@@ -106,9 +104,6 @@ ifneq ($(KERNELRELEASE),)
 		r8126-objs += r8126_ptp.o
 		EXTRA_CFLAGS += -DENABLE_PTP_SUPPORT
 	endif
-	ifeq ($(ENABLE_PTP_MASTER_MODE), y)
-		EXTRA_CFLAGS += -DENABLE_PTP_MASTER_MODE
-	endif
 	ifeq ($(ENABLE_RSS_SUPPORT), y)
 		r8126-objs += r8126_rss.o
 		EXTRA_CFLAGS += -DENABLE_RSS_SUPPORT
@@ -136,6 +131,12 @@ ifneq ($(KERNELRELEASE),)
 	ifeq ($(ENABLE_RX_PACKET_FRAGMENT), y)
 		EXTRA_CFLAGS += -DENABLE_RX_PACKET_FRAGMENT
 	endif
+	ifeq ($(ENABLE_GIGA_LITE), y)
+		EXTRA_CFLAGS += -DENABLE_GIGA_LITE
+	endif
+
+	# Backward compatibility
+	ccflags-y  += $(EXTRA_CFLAGS)
 else
 	BASEDIR := /lib/modules/$(shell uname -r)
 	KERNELDIR ?= $(BASEDIR)/build
