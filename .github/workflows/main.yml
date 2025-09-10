@@ -21,15 +21,7 @@ jobs:
             E=$(echo ${D} | sed 's#/##')
             
             echo "download last rr ${E} module pack"
-            curl -kL https://github.com/PeterSuh-Q3/arpl-modules/releases/download/rr-last/${E}.tgz -o /tmp/file.tgz
-            ret=$?
-            if [ $ret -eq 22 ]; then
-              echo "Warning: 404 or HTTP error, but continuing workflow"
-              rm -f /tmp/file.tgz
-            elif [ $ret -ne 0 ]; then
-              echo "curl failed with code $ret"
-              exit $ret
-            fi
+            curl -kL https://github.com/PeterSuh-Q3/arpl-modules/releases/download/rr-last/${E}.tgz -o /tmp/${E}.tgz
 
             if [ -f /tmp/${E}.tgz ]; then
               echo "backup ${E} tcrp modules"
