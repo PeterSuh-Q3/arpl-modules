@@ -19,9 +19,13 @@ jobs:
           for D in `ls -d *-*/ `; do
           
             E=$(echo ${D} | sed 's#/##')
-            
-            echo "download last rr ${E} module pack"
-            curl -kL https://github.com/PeterSuh-Q3/arpl-modules/releases/download/rr-last/${E}.tgz -o /tmp/${E}.tgz
+
+            if [[ "$E" == *"3.10.108"* ]]; then
+              echo "Skipping download for ${E} due to kernel 3.10.108 match"
+            else
+              echo "download last rr ${E} module pack"
+              curl -kL https://github.com/PeterSuh-Q3/arpl-modules/releases/download/rr-last/${E}.tgz -o /tmp/${E}.tgz
+            fi
 
             if [ -f /tmp/${E}.tgz ]; then
               echo "backup ${E} tcrp modules"
