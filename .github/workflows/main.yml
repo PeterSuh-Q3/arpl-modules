@@ -21,7 +21,13 @@ jobs:
             E=$(echo ${D} | sed 's#/##')
             
             echo "download last rr ${E} module pack"
-            curl -kL https://github.com/PeterSuh-Q3/arpl-modules/releases/download/rr-last/${E}.tgz -o /tmp/${E}.tgz
+            http_status=$(curl -kL -w "%{http_code}" -o /tmp/${E}.tgz -f https://github.com/PeterSuh-Q3/arpl-modules/releases/download/rr-last/${E}.tgz)
+            if [ "$http_status" = "200" ]; then
+              echo "download success and file saved"
+            else
+              echo "file not found or error"
+              rm -f /tmp/${E}.tgz
+            fi
 
             if [ -f /tmp/${E}.tgz ]; then
               echo "backup ${E} tcrp modules"
