@@ -14,61 +14,21 @@ jobs:
 
       - name: Tar modules
         run: |
-          ls -d *-*/ | grep -v -e epyc7002
-          for D in `ls -d *-*/ | grep -v -e epyc7002`; do
+          ls -d *-*/ 
+          
+          for D in `ls -d *-*/ `; do
+          
             E=$(echo ${D} | sed 's#/##')
-            if [[ "${E}" != bromolow* ]]; then
-              echo "backup ${E} tcrp modules"
-              for file in "$E"/*.ko; do
-                if [ -f "$file" ]; then
-                  new_name="${file}.bak"
-                  mv -vf "$file" "$new_name"                
-                fi
-              done
-              
-              echo "download last rr ${E} module pack"
-              curl -kL https://github.com/PeterSuh-Q3/arpl-modules/releases/download/rr-last/${E}.tgz -o /tmp/${E}.tgz
-              
-              echo "extract last rr ${E} module pack"
-              tar -xaf /tmp/${E}.tgz -C ./${E}/
-              echo "restore ${E} tcrp modules"
-              for file in "$E"/*.ko.bak; do
-                if [ -f "$file" ]; then
-                  new_name="${file%.bak}"
-                  mv -vf "$file" "$new_name"                
-                fi
-              done
-            fi  
+
             echo "copy ${E} vanilla module"
             [ -d ./vanilla/${E} ] && cp -vf ./vanilla/${E}/*.ko ./${E}/
+            
             echo "copy ${E} thirdparty module"
             [ -d ./thirdparty/${E} ] && cp -vf ./thirdparty/${E}/*.ko ./${E}/
+            
             (cd ${E} && tar czf ../${E}.tgz *)
             sha256sum ./${E}.tgz | awk '{print $1}' | awk '{print $1 " '${E}.tgz' modpack.sha256"}' >> files-chksum
-          done
-
-          ls -d *-*/ | grep epyc7002
-          for D in `ls -d *-*/ | grep epyc7002`; do
-            E=$(echo ${D} | sed 's#/##')
             
-            echo "download last rr ${E} module pack"
-            curl -kL https://github.com/PeterSuh-Q3/arpl-modules/releases/download/rr-last/${E}.tgz -o /tmp/${E}.tgz
-            echo "extract last rr ${E} module pack"
-            mkdir -p /tmp/${E}/
-            tar -xaf /tmp/${E}.tgz -C /tmp/${E}/
-            
-            echo "copy ${E} rr modules to tcrp if module not exists"
-            for fullpath in /tmp/"$E"/*.ko; do
-                file=$(basename "$fullpath")
-                [ ! -f ./${E}/"$file" ] && cp -vf "$fullpath" ./${E}/"$file" || cp -vf "$fullpath" ./${E}/"$file"
-            done
-
-            echo "copy ${E} vanilla module"
-            [ -d ./vanilla/${E} ] && cp -vf ./vanilla/${E}/*.ko ./${E}/
-            #echo "copy ${E} thirdparty module" # i915.ko Already have in RR
-            #[ -d ./thirdparty/${E} ] && cp -vf ./thirdparty/${E}/*.ko ./${E}/
-            (cd ${E} && ls -l . && tar czf ../${E}.tgz *)
-            sha256sum ./${E}.tgz | awk '{print $1}' | awk '{print $1 " '${E}.tgz' modpack.sha256"}' >> files-chksum
           done
 
           curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/raw/refs/heads/main/firmware.tgz
