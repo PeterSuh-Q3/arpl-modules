@@ -19,27 +19,29 @@ jobs:
           for D in `ls -d *-*/ `; do
           
             E=$(echo ${D} | sed 's#/##')
-
-            echo "backup ${E} tcrp modules"
-            for file in "$E"/*.ko; do
-              if [ -f "$file" ]; then
-                new_name="${file}.bak"
-                mv -vf "$file" "$new_name"                
-              fi
-            done
             
             echo "download last rr ${E} module pack"
             curl -kL https://github.com/PeterSuh-Q3/arpl-modules/releases/download/rr-last/${E}.tgz -o /tmp/${E}.tgz
+
+            if [ -f /tmp/${E}.tgz ]; then
+              echo "backup ${E} tcrp modules"
+              for file in "$E"/*.ko; do
+                if [ -f "$file" ]; then
+                  new_name="${file}.bak"
+                  mv -vf "$file" "$new_name"                
+                fi
+              done
             
-            echo "extract last rr ${E} module pack"
-            tar -xaf /tmp/${E}.tgz -C ./${E}/
-            echo "restore ${E} tcrp modules"
-            for file in "$E"/*.ko.bak; do
-              if [ -f "$file" ]; then
-                new_name="${file%.bak}"
-                mv -vf "$file" "$new_name"                
-              fi
-            done
+              echo "extract last rr ${E} module pack"
+              tar -xaf /tmp/${E}.tgz -C ./${E}/
+              echo "restore ${E} tcrp modules"
+              for file in "$E"/*.ko.bak; do
+                if [ -f "$file" ]; then
+                  new_name="${file%.bak}"
+                  mv -vf "$file" "$new_name"                
+                fi
+              done
+            fi  
 
             echo "copy ${E} vanilla module"
             [ -d ./vanilla/${E} ] && cp -vf ./vanilla/${E}/*.ko ./${E}/
