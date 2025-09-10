@@ -1,8 +1,8 @@
 name: Tar modules
 
 on:
-  #release:
-  #  types: [published]
+  release:
+    types: [published]
 
   workflow_dispatch:
 
