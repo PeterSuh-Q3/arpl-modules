@@ -3,19 +3,18 @@ name: Trigger other workflow
 on:
   workflow_dispatch:
 
+# .github/workflows/trigger_test.yml
 jobs:
-  tar:
+  trigger:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Trigger Workflow in Another Repository
+      - name: Trigger other workflow
         uses: peter-evans/repository-dispatch@v2
         with:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           repository: PeterSuh-Q3/tcrp-modules
           event-type: trigger-workflow
-
+          
       #- name: Trigger other workflow
       #  uses: actions/github-script@v6
       #  with:
