@@ -1,60 +1,80 @@
 name: Tar modules (only copy added modules)
-
 on:
   release:
     types: [published]
-
   workflow_dispatch:
+    inputs:
+      tag:
+        description: '다운로드할 태그 (예: rr-last, 25.4.6)'
+        required: true
+        default: '25.4.6'
+        type: string
+      modules:
+        description: '복사할 모듈 목록 (공백으로 구분)'
+        required: true
+        default: 'r8126 r8127'
+        type: string
 
 jobs:
   tar:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
+      
       - name: Tar modules
         run: |
+          # 입력값 설정 (release 트리거시 기본값 사용)
+          TAG="${{ inputs.tag || '25.4.6' }}"
+          MODULES="${{ inputs.modules || 'r8126 r8127' }}"
+          
+          echo "Using tag: $TAG"
+          echo "Using modules: $MODULES"
+          
+          # 모듈 배열로 변환
+          MODULE_ARRAY=($MODULES)
+          
           ls -d *-*/ 
+          mkdir ./output
           
           for D in `ls -d *-*/ `; do
-          
             E=$(echo ${D} | sed 's#/##')
-
+            
             if [[ "$E" == *"3.10.108"* ]]; then
               echo "Skipping download for ${E} due to kernel 3.10.108 match"
             else
-              echo "download last rr ${E} module pack"
-              curl -kL https://github.com/PeterSuh-Q3/arpl-modules/releases/download/rr-last/${E}.tgz -o /tmp/${E}.tgz
+              echo "download ${TAG} ${E} module pack"
+              curl -kL https://github.com/PeterSuh-Q3/arpl-modules/releases/download/${TAG}/${E}.tgz -o /tmp/${E}.tgz
             fi
-
-            if [ -f /tmp/${E}.tgz ]; then
-              echo "backup ${E} tcrp modules"
-              for file in "$E"/*.ko; do
-                if [ -f "$file" ]; then
-                  new_name="${file}.bak"
-                  mv -vf "$file" "$new_name"                
-                fi
-              done
             
-              echo "extract last rr ${E} module pack"
-              tar -xaf /tmp/${E}.tgz -C ./${E}/
-              echo "restore ${E} tcrp modules"
-              for file in "$E"/*.ko.bak; do
-                if [ -f "$file" ]; then
-                  new_name="${file%.bak}"
-                  mv -vf "$file" "$new_name"                
+            if [ -f /tmp/${E}.tgz ]; then
+              echo "extract ${TAG} ${E} module pack"
+              mkdir -p ./output/${E}/
+              tar -xaf /tmp/${E}.tgz -C ./output/${E}/
+              
+              echo "copy target modules (${MODULES}) from ${E} tcrp modules"
+              
+              # 각 모듈에 대해 처리
+              for module in "${MODULE_ARRAY[@]}"; do
+                module_file="${module}.ko"
+                
+                # 모듈 파일 존재 확인 및 복사
+                if [ -f ./${E}/"${module_file}" ]; then
+                  echo "Copying ${module_file} for ${E}"
+                  cp -vf ./${E}/"${module_file}" ./output/${E}/
+                else
+                  echo "Warning: ${module_file} not found"
                 fi
               done
             fi  
             
-            (cd ${E} && tar czf ../${E}.tgz *)
+            (cd ./output/${E} && tar czf ../../${E}.tgz *)
             sha256sum ./${E}.tgz | awk '{print $1}' | awk '{print $1 " '${E}.tgz' modpack.sha256"}' >> files-chksum
-            
           done
-
+          
+          # 펌웨어 파일 다운로드
           curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/raw/refs/heads/main/firmware.tgz
           sha256sum ./firmware.tgz | awk '{print $1}' | awk '{print $1 " 'firmware.tgz' firmware.sha256"}' >> files-chksum
-
+          
           curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/raw/refs/heads/main/firmwarei915.tgz
           sha256sum ./firmwarei915.tgz | awk '{print $1}' | awk '{print $1 " 'firmwarei915.tgz' firmwarei915.sha256"}' >> files-chksum
           
@@ -66,11 +86,5 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
-            *.tgz, files-chksum
-
-      #- name: Trigger Workflow in Another Repository
-      #  uses: peter-evans/repository-dispatch@v1
-      #  with:
-      #    token: ${{ secrets.ACCESS_TOKEN }}
-      #    repository: PeterSuh-Q3/tcrp-modules
-      #    event-type: trigger-workflow
+            *.tgz
+            files-chksum
