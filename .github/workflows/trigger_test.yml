@@ -10,7 +10,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Trigger Workflow in Another Repository
-        uses: peter-evans/repository-dispatch@v1
+        uses: peter-evans/repository-dispatch@v2
         with:
           token: ${{ secrets.ACCESS_TOKEN }}
           repository: PeterSuh-Q3/tcrp-modules
