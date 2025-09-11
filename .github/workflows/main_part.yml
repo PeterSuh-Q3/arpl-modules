@@ -39,12 +39,8 @@ jobs:
           for D in `ls -d *-*/ `; do
             E=$(echo ${D} | sed 's#/##')
             
-            if [[ "$E" == *"3.10.108"* ]]; then
-              echo "Skipping download for ${E} due to kernel 3.10.108 match"
-            else
-              echo "download ${TAG} ${E} module pack"
-              curl -kL https://github.com/PeterSuh-Q3/arpl-modules/releases/download/${TAG}/${E}.tgz -o /tmp/${E}.tgz
-            fi
+            echo "download ${TAG} ${E} module pack"
+            curl -kL https://github.com/PeterSuh-Q3/arpl-modules/releases/download/${TAG}/${E}.tgz -o /tmp/${E}.tgz
             
             if [ -f /tmp/${E}.tgz ]; then
               echo "extract ${TAG} ${E} module pack"
