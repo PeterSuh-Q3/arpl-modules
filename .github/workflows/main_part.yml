@@ -1,0 +1,82 @@
+name: Tar modules (only copy added modules)
+
+on:
+  release:
+    types: [published]
+
+  workflow_dispatch:
+
+jobs:
+  tar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Tar modules
+        run: |
+          ls -d *-*/ 
+          
+          for D in `ls -d *-*/ `; do
+          
+            E=$(echo ${D} | sed 's#/##')
+
+            if [[ "$E" == *"3.10.108"* ]]; then
+              echo "Skipping download for ${E} due to kernel 3.10.108 match"
+            else
+              echo "download last rr ${E} module pack"
+              curl -kL https://github.com/PeterSuh-Q3/arpl-modules/releases/download/rr-last/${E}.tgz -o /tmp/${E}.tgz
+            fi
+
+            if [ -f /tmp/${E}.tgz ]; then
+              echo "backup ${E} tcrp modules"
+              for file in "$E"/*.ko; do
+                if [ -f "$file" ]; then
+                  new_name="${file}.bak"
+                  mv -vf "$file" "$new_name"                
+                fi
+              done
+            
+              echo "extract last rr ${E} module pack"
+              tar -xaf /tmp/${E}.tgz -C ./${E}/
+              echo "restore ${E} tcrp modules"
+              for file in "$E"/*.ko.bak; do
+                if [ -f "$file" ]; then
+                  new_name="${file%.bak}"
+                  mv -vf "$file" "$new_name"                
+                fi
+              done
+            fi  
+
+            echo "copy ${E} vanilla module"
+            [ -d ./vanilla/${E} ] && cp -vf ./vanilla/${E}/*.ko ./${E}/
+            
+            echo "copy ${E} thirdparty module"
+            [ -d ./thirdparty/${E} ] && cp -vf ./thirdparty/${E}/*.ko ./${E}/
+            
+            (cd ${E} && tar czf ../${E}.tgz *)
+            sha256sum ./${E}.tgz | awk '{print $1}' | awk '{print $1 " '${E}.tgz' modpack.sha256"}' >> files-chksum
+            
+          done
+
+          curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/raw/refs/heads/main/firmware.tgz
+          sha256sum ./firmware.tgz | awk '{print $1}' | awk '{print $1 " 'firmware.tgz' firmware.sha256"}' >> files-chksum
+
+          curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/raw/refs/heads/main/firmwarei915.tgz
+          sha256sum ./firmwarei915.tgz | awk '{print $1}' | awk '{print $1 " 'firmwarei915.tgz' firmwarei915.sha256"}' >> files-chksum
+          
+          cat files-chksum
+
+      # Publish a release if is a tag
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            *.tgz, files-chksum
+
+      #- name: Trigger Workflow in Another Repository
+      #  uses: peter-evans/repository-dispatch@v1
+      #  with:
+      #    token: ${{ secrets.ACCESS_TOKEN }}
+      #    repository: PeterSuh-Q3/tcrp-modules
+      #    event-type: trigger-workflow
