@@ -9,9 +9,20 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Trigger Workflow in Another Repository
-        uses: peter-evans/repository-dispatch@v2
+      #- name: Trigger Workflow in Another Repository
+      #  uses: peter-evans/repository-dispatch@v2
+      #  with:
+      #    token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+      #    repository: PeterSuh-Q3/tcrp-modules
+      #    event-type: trigger-workflow
+
+      - name: Trigger other workflow
+        uses: actions/github-script@v6
         with:
-          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-          repository: PeterSuh-Q3/tcrp-modules
-          event-type: trigger-workflow
+          github-token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          script: |
+            github.rest.repos.createDispatchEvent({
+              owner: 'PeterSuh-Q3',
+              repo: 'tcrp-modules',
+              event_type: 'trigger-workflow',
+            })          
