@@ -24,8 +24,8 @@ jobs:
       - name: Tar modules
         run: |
           # 입력값 설정 (release 트리거시 기본값 사용)
-          TAG="${{ inputs.tag || '25.4.6' }}"
-          MODULES="${{ inputs.modules || 'r8126 r8127' }}"
+          TAG="${{ inputs.tag || '25.9.11' }}"
+          MODULES="${{ inputs.modules || 'mpt3sas' }}"
           
           echo "Using tag: $TAG"
           echo "Using modules: $MODULES"
