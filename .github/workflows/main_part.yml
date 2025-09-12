@@ -7,12 +7,12 @@ on:
       tag:
         description: '다운로드할 태그 (예: rr-last, 25.4.6)'
         required: true
-        default: '25.4.6'
+        default: '25.9.11'
         type: string
       modules:
         description: '복사할 모듈 목록 (공백으로 구분)'
         required: true
-        default: 'r8126 r8127'
+        default: 'mpt3sas'
         type: string
 
 jobs:
