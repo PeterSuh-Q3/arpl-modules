@@ -12,7 +12,7 @@ on:
       modules:
         description: '복사할 모듈 목록 (공백으로 구분)'
         required: true
-        default: 'mpt3sas'
+        default: 'mpt3sas usb-storage virtio_scsi'
         type: string
 
 jobs:
@@ -25,7 +25,7 @@ jobs:
         run: |
           # 입력값 설정 (release 트리거시 기본값 사용)
           TAG="${{ inputs.tag || '25.9.11' }}"
-          MODULES="${{ inputs.modules || 'mpt3sas' }}"
+          MODULES="${{ inputs.modules || 'mpt3sas usb-storage virtio_scsi' }}"
           
           echo "Using tag: $TAG"
           echo "Using modules: $MODULES"
