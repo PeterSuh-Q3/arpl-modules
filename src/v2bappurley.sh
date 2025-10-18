@@ -2,8 +2,6 @@
 
 set -e
 
-TOOLKIT_VER="7.1"
-
 #if [ -f ../../arpl/PLATFORMS ]; then
 #  cp ../../arpl/PLATFORMS PLATFORMS
 #else
@@ -12,6 +10,8 @@ TOOLKIT_VER="7.1"
 
 echo -e "Compiling modules..."
 while read PLATFORM KVER; do
+  [[ ${KVER} = "4.4.180" ]] && TOOLKIT_VER="7.1"
+  [[ ${KVER} = "4.4.320" ]] && TOOLKIT_VER="7.2"
   [ -n "$1" -a "${PLATFORM}" != "$1" ] && continue
   DIR="${KVER:0:1}.x"
   [ ! -d "${PWD}/${DIR}" ] && continue
