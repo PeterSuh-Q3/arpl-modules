@@ -38,6 +38,13 @@ jobs:
             
               echo "extract last rr ${E} module pack"
               tar -xaf /tmp/${E}.tgz -C ./${E}/
+              
+              for f in r8125_txrx.ko r8126_txrx.ko r8127_txrx.ko; do
+                if [ -f "./${E}/$f" ]; then
+                  rm "./${E}/$f"
+                fi
+              done
+              
               echo "restore ${E} tcrp modules"
               for file in "$E"/*.ko.bak; do
                 if [ -f "$file" ]; then
