@@ -48,4 +48,4 @@ while read PLATFORM KVER; do
       [[ -f ${PWD}/../${PLATFORM}-${KVER}/i2c-algo-bit.ko ]] && rm ${PWD}/../${PLATFORM_DIR}/i2c-algo-bit.ko
   done
   rm -rf /tmp/${PLATFORM}-${KVER}
-done < PURLEY71
+done < V2BAPPURLEY
