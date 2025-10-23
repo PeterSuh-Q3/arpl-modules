@@ -18,9 +18,8 @@ jobs:
           curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/raw/refs/heads/main/firmware.tgz
           sha256sum ./firmware.tgz | awk '{print $1}' | awk '{print $1 " 'firmware.tgz' firmware.sha256"}' > files-chksum
 
-          cd ${{ github.workspace }}/thirdparty/firmware/i915
-          tar -zcvf ../firmwarei915.tgz *
-          mv ../firmwarei915.tgz ${{ github.workspace }}/firmwarei915.tgz
+          cd ${{ github.workspace }}/thirdparty/firmware
+          tar -zcvf ${{ github.workspace }}/firmwarei915.tgz i915
           cd ${{ github.workspace }}
           sha256sum ./firmwarei915.tgz | awk '{print $1}' | awk '{print $1 " 'firmwarei915.tgz' firmwarei915.sha256"}' >> files-chksum
         
