@@ -15,6 +15,9 @@ jobs:
       - name: Tar modules
         run: |
 
+          curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/raw/refs/heads/main/firmware.tgz
+          sha256sum ./firmware.tgz | awk '{print $1}' | awk '{print $1 " 'firmware.tgz' firmware.sha256"}' > files-chksum
+
           cd ${{ github.workspace }}/thirdparty/firmware/i915
           tar -zcvf ${{ github.workspace }}/firmwarei915.tgz *
           cd ${{ github.workspace }}
@@ -69,9 +72,6 @@ jobs:
             sha256sum ./${E}.tgz | awk '{print $1}' | awk '{print $1 " '${E}.tgz' modpack.sha256"}' >> files-chksum
             
           done
-
-          curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/raw/refs/heads/main/firmware.tgz
-          sha256sum ./firmware.tgz | awk '{print $1}' | awk '{print $1 " 'firmware.tgz' firmware.sha256"}' >> files-chksum
           
           cat files-chksum
 
