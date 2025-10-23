@@ -15,9 +15,9 @@ jobs:
       - name: Tar modules
         run: |
 
-          cd ./thirdparty/firmware/i915
-          tar -zcvf ~/firmwarei915.tgz *
-          cd ~
+          cd ${{ github.workspace }}/thirdparty/firmware/i915
+          tar -zcvf ${{ github.workspace }}/firmwarei915.tgz *
+          cd ${{ github.workspace }}
           sha256sum ./firmwarei915.tgz | awk '{print $1}' | awk '{print $1 " 'firmwarei915.tgz' firmwarei915.sha256"}' >> files-chksum
         
           ls -d *-*/ 
