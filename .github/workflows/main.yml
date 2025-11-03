@@ -28,8 +28,8 @@ jobs:
           
             E=$(echo ${D} | sed 's#/##')
 
-            if [[ "$E" == *"3.10.108"* ]]; then
-              echo "Skipping download for ${E} due to kernel 3.10.108 match"
+            if [[ "$E" == *"3.10.105"* ]] || [[ "$E" == *"3.10.108"* ]] || [[ "$E" == *"4.4.59"* ]]; then
+              echo "Skipping download for ${E} due to kernel 3.10.105/3.10.108/4.4.59 match"
             else
               echo "download last rr ${E} module pack"
               curl -kL https://github.com/PeterSuh-Q3/arpl-modules/releases/download/rr-last/${E}.tgz -o /tmp/${E}.tgz
