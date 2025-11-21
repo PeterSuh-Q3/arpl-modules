@@ -28710,7 +28710,11 @@ static bool rtl8168_registered = false;
 static int __init 
 rtl8168_init_module(void)
 {
-    int ret;   
+    int ret = 0;   
+    if (rtl8168_registered) {
+        pr_info("r8168: already registered, skipping init\n");
+        return -EEXIST;
+    }   
 #ifdef ENABLE_R8168_PROCFS
     rtl8168_proc = proc_create("r8168", 0, init_net.proc_net, &rtl8168_proc_fops);
     if (!rtl8168_proc) {
@@ -28719,21 +28723,28 @@ rtl8168_init_module(void)
     }
     rtl8168_proc_module_init();
 #endif
-
-    if (rtl8168_registered) {
-        pr_info("r8168: already registered, skipping\n");
-        return -EEXIST;
-    }
   
 #if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,0)
     ret = pci_register_driver(&rtl8168_pci_driver);
 #else
     ret = pci_module_init(&rtl8168_pci_driver);
 #endif
-    if (ret)
+    if (ret) {
+        pr_info("r8168: pci_register_driver failed: %d\n", ret);
+#ifdef ENABLE_R8168_PROCFS
+        if (rtl8168_proc) {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,10,0)
+            remove_proc_entry("r8168", init_net.proc_net);
+#else
+            remove_proc_entry("r8168", proc_net);
+#endif
+            rtl8168_proc = NULL;
+        }
+#endif
         return ret;
+   }
+   rtl8168_registered = true;
 
-    rtl8168_registered = true;
     return 0;
 }
 
