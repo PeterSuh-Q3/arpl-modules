@@ -28710,8 +28710,9 @@ static bool rtl8168_registered = false;
 static int __init 
 rtl8168_init_module(void)
 {
+    int ret;   
 #ifdef ENABLE_R8168_PROCFS
-    rtl8168_proc = proc_create("r8168", 0, init_net.proc_net, &rtl8168_fops);
+    rtl8168_proc = proc_create("r8168", 0, init_net.proc_net, &rtl8168_proc_fops);
     if (!rtl8168_proc) {
         pr_info("r8168: proc entry already exists, skipping proc create\n");
         return -EEXIST;
@@ -28724,7 +28725,6 @@ rtl8168_init_module(void)
         return -EEXIST;
     }
   
-    int ret;
 #if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,0)
     ret = pci_register_driver(&rtl8168_pci_driver);
 #else
