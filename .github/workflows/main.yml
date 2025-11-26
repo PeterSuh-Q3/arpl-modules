@@ -26,13 +26,14 @@ jobs:
           sha256sum ./firmwarei915.tgz | awk '{print $1}' | awk '{print $1 " 'firmwarei915.tgz' firmwarei915.sha256"}' >> files-chksum
         
           ls -d *-*/ 
-          for D in `ls -d *-*/ `; do
+          #epyc7002-7.2-5.10.55 제외
+          for D in `ls -d *-*/ | grep -v "epyc7002-7.2-5.10.55"`; do
           
             E=$(echo ${D} | sed 's#/##')
 
             #rr-last repo 에 올라와 있는 최종모듈을 다운로드, (커널 4.4.59 이하 : 대부분 DSM6 대상)은 제외
             if [[ "$E" == *"3.10.105"* ]] || [[ "$E" == *"3.10.108"* ]] || [[ "$E" == *"4.4.59"* ]]; then
-              echo "Skipping download for ${E} due to kernel 3.10.105/3.10.108/4.4.59 match"
+              echo "Skipping download for ${E} due to kernel 3.10.105/3.10.108/4.4.59/epyc7002-7.2-5.10.55 match"
             else
               echo "download last rr ${E} module pack"
               curl -kL https://github.com/PeterSuh-Q3/arpl-modules/releases/download/rr-last/${E}.tgz -o /tmp/${E}.tgz
@@ -82,6 +83,28 @@ jobs:
             sha256sum ./${E}.tgz | awk '{print $1}' | awk '{print $1 " '${E}.tgz' modpack.sha256"}' >> files-chksum
             
           done
+
+          platform="epyc7002"
+          [ -f ./${platform}-7.2-5.10.55.tgz ] && cp -vf ${platform}-7.2-5.10.55.tgz ${platform}-7.3-5.10.55.tgz
+          E="${platform}"-7.2-5.10.55"
+          sha256sum ./${E}.tgz | awk '{print $1}' | awk '{print $1 " '${E}.tgz' modpack.sha256"}' >> files-chksum          
+          E="${platform}"-7.3-5.10.55"
+          sha256sum ./${E}.tgz | awk '{print $1}' | awk '{print $1 " '${E}.tgz' modpack.sha256"}' >> files-chksum          
+
+          platform="geminilakenk"
+          [ -f ./${platform}-7.2-5.10.55.tgz ] && cp -vf ${platform}-7.2-5.10.55.tgz ${platform}-7.3-5.10.55.tgz
+          E="${platform}"-7.3-5.10.55"
+          sha256sum ./${E}.tgz | awk '{print $1}' | awk '{print $1 " '${E}.tgz' modpack.sha256"}' >> files-chksum          
+
+          platform="v1000nk"
+          [ -f ./${platform}-7.2-5.10.55.tgz ] && cp -vf ${platform}-7.2-5.10.55.tgz ${platform}-7.3-5.10.55.tgz
+          E="${platform}"-7.3-5.10.55"
+          sha256sum ./${E}.tgz | awk '{print $1}' | awk '{print $1 " '${E}.tgz' modpack.sha256"}' >> files-chksum          
+
+          platform="r1000nk"
+          [ -f ./${platform}-7.2-5.10.55.tgz ] && cp -vf ${platform}-7.2-5.10.55.tgz ${platform}-7.3-5.10.55.tgz
+          E="${platform}"-7.3-5.10.55"
+          sha256sum ./${E}.tgz | awk '{print $1}' | awk '{print $1 " '${E}.tgz' modpack.sha256"}' >> files-chksum          
           
           cat files-chksum
 
