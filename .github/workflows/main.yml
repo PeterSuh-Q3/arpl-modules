@@ -84,27 +84,22 @@ jobs:
             
           done
 
-          platform="epyc7002"
-          [ -f ./${platform}-7.2-5.10.55.tgz ] && cp -vf ${platform}-7.2-5.10.55.tgz ${platform}-7.3-5.10.55.tgz
-          E="${platform}""-7.2-5.10.55"
-          sha256sum ./${E}.tgz | awk '{print $1}' | awk '{print $1 " '${E}.tgz' modpack.sha256"}' >> files-chksum          
-          E="${platform}""-7.3-5.10.55"
-          sha256sum ./${E}.tgz | awk '{print $1}' | awk '{print $1 " '${E}.tgz' modpack.sha256"}' >> files-chksum          
-
-          platform="geminilakenk"
-          [ -f ./${platform}-7.2-5.10.55.tgz ] && cp -vf ${platform}-7.2-5.10.55.tgz ${platform}-7.3-5.10.55.tgz
-          E="${platform}""-7.3-5.10.55"
-          sha256sum ./${E}.tgz | awk '{print $1}' | awk '{print $1 " '${E}.tgz' modpack.sha256"}' >> files-chksum          
-
-          platform="v1000nk"
-          [ -f ./${platform}-7.2-5.10.55.tgz ] && cp -vf ${platform}-7.2-5.10.55.tgz ${platform}-7.3-5.10.55.tgz
-          E="${platform}""-7.3-5.10.55"
-          sha256sum ./${E}.tgz | awk '{print $1}' | awk '{print $1 " '${E}.tgz' modpack.sha256"}' >> files-chksum          
-
-          platform="r1000nk"
-          [ -f ./${platform}-7.2-5.10.55.tgz ] && cp -vf ${platform}-7.2-5.10.55.tgz ${platform}-7.3-5.10.55.tgz
-          E="${platform}""-7.3-5.10.55"
-          sha256sum ./${E}.tgz | awk '{print $1}' | awk '{print $1 " '${E}.tgz' modpack.sha256"}' >> files-chksum          
+          for platform in epyc7002 geminilakenk v1000nk r1000nk
+          do
+              # 필요에 따라 7.2 파일을 7.3 버전으로 복사
+              [ -f ./${platform}-7.2-5.10.55.tgz ] && cp -vf ${platform}-7.2-5.10.55.tgz ${platform}-7.3-5.10.55.tgz
+          
+              # epyc7002만 7.2와 7.3 모두 체크섬 기록, 나머지는 7.3만
+              if [ "$platform" = "epyc7002" ]; then
+                  for ver in 7.2 7.3; do
+                      E="${platform}-$ver-5.10.55"
+                      sha256sum ./${E}.tgz | awk '{print $1 " '${E}.tgz' modpack.sha256"}' >> files-chksum
+                  done
+              else
+                  E="${platform}-7.3-5.10.55"
+                  sha256sum ./${E}.tgz | awk '{print $1 " '${E}.tgz' modpack.sha256"}' >> files-chksum
+              fi
+          done
           
           cat files-chksum
 
