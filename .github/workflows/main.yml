@@ -15,9 +15,11 @@ jobs:
       - name: Tar modules
         run: |
 
+          #main repo 에 있는 공용 펌웨어를 워크스페이스에 다운로드
           curl -kLO https://github.com/PeterSuh-Q3/arpl-modules/raw/refs/heads/main/firmware.tgz
           sha256sum ./firmware.tgz | awk '{print $1}' | awk '{print $1 " 'firmware.tgz' firmware.sha256"}' > files-chksum
 
+          #thirdparty i915 펌웨어(커널5 전용)를 별도 tar로 압축
           cd ${{ github.workspace }}/thirdparty/firmware
           tar -zcvf ${{ github.workspace }}/firmwarei915.tgz i915
           cd ${{ github.workspace }}
@@ -28,6 +30,7 @@ jobs:
           
             E=$(echo ${D} | sed 's#/##')
 
+            #rr-last repo 에 올라와 있는 최종모듈을 다운로드, (커널 4.4.59 이하 : 대부분 DSM6 대상)은 제외
             if [[ "$E" == *"3.10.105"* ]] || [[ "$E" == *"3.10.108"* ]] || [[ "$E" == *"4.4.59"* ]]; then
               echo "Skipping download for ${E} due to kernel 3.10.105/3.10.108/4.4.59 match"
             else
@@ -35,6 +38,7 @@ jobs:
               curl -kL https://github.com/PeterSuh-Q3/arpl-modules/releases/download/rr-last/${E}.tgz -o /tmp/${E}.tgz
             fi
 
+            #rr-last 로 부터 다운로드 받은 플랫폼.tgz 존재시 기존 mshell 모듈은 .bak 파일로 백업
             if [ -f /tmp/${E}.tgz ]; then
               echo "backup ${E} tcrp modules"
               for file in "$E"/*.ko; do
@@ -43,16 +47,19 @@ jobs:
                   mv -vf "$file" "$new_name"                
                 fi
               done
-            
+
+              #rr-last 플랫폼.tgz 압축해제
               echo "extract last rr ${E} module pack"
               tar -xaf /tmp/${E}.tgz -C ./${E}/
-              
+
+              #rr-last 의 tx/rx 개선모듈은 제거
               for f in r8168_tx.ko r8125_txrx.ko r8126_txrx.ko r8127_txrx.ko; do
                 if [ -f "./${E}/$f" ]; then
                   rm "./${E}/$f"
                 fi
               done
-              
+
+              #mshell backup 모듈로 부터 rr-last 에 overwrite
               echo "restore ${E} tcrp modules"
               for file in "$E"/*.ko.bak; do
                 if [ -f "$file" ]; then
@@ -62,12 +69,15 @@ jobs:
               done
             fi  
 
+            #각 플랫폼별 바닐라 모듈 overwrite
             echo "copy ${E} vanilla module"
             [ -d ./vanilla/${E} ] && cp -vf ./vanilla/${E}/*.ko ./${E}/
-            
-            echo "copy ${E} thirdparty module"
+
+            #각 플랫폼별 thirdparty 모듈 overwrite (rr 의 모듈로 대체하고 싶은경우 같이 포함시킴)           
+            echo "copy ${E} thirdparty module (rr modules)"
             [ -d ./thirdparty/${E} ] && cp -vf ./thirdparty/${E}/*.ko ./${E}/
-            
+
+            #각 플랫폼별 .tgz 압축
             (cd ${E} && tar czf ../${E}.tgz *)
             sha256sum ./${E}.tgz | awk '{print $1}' | awk '{print $1 " '${E}.tgz' modpack.sha256"}' >> files-chksum
             
