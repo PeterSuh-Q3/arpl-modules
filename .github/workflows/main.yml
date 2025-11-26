@@ -47,7 +47,7 @@ jobs:
               echo "extract last rr ${E} module pack"
               tar -xaf /tmp/${E}.tgz -C ./${E}/
               
-              for f in r8125_txrx.ko r8126_txrx.ko r8127_txrx.ko; do
+              for f in r8168_tx.ko r8125_txrx.ko r8126_txrx.ko r8127_txrx.ko; do
                 if [ -f "./${E}/$f" ]; then
                   rm "./${E}/$f"
                 fi
