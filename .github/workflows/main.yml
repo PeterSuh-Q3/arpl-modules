@@ -53,12 +53,12 @@ jobs:
               echo "extract last rr ${E} module pack"
               tar -xaf /tmp/${E}.tgz -C ./${E}/
 
-              #rr-last 의 tx/rx 개선모듈은 제거
-              for f in r8168_tx.ko r8125_txrx.ko r8126_txrx.ko r8127_txrx.ko; do
-                if [ -f "./${E}/$f" ]; then
-                  rm "./${E}/$f"
-                fi
-              done
+              #rr-last 의 tx/rx 개선모듈은 제거, 유지(25.12.09)
+              #for f in r8168_tx.ko r8125_txrx.ko r8126_txrx.ko r8127_txrx.ko; do
+              #  if [ -f "./${E}/$f" ]; then
+              #    rm "./${E}/$f"
+              #  fi
+              #done
 
               #mshell backup 모듈로 부터 rr-last 에 overwrite
               echo "restore ${E} tcrp modules"
