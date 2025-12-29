@@ -321,18 +321,18 @@ EXPORT_SYMBOL_GPL(dca_get_tag);
  * @ops - pointer to struct of dca operation function pointers
  * @priv_size - size of extra mem to be added for provider's needs
  */
-struct dca_provider *alloc_dca_provider(struct dca_ops *ops, int priv_size)
+struct dca_provider *alloc_dca_provider(const struct dca_ops *ops, int priv_size)
 {
-	struct dca_provider *dca;
-	int alloc_size;
+    struct dca_provider *dca;
+    int alloc_size;
 
-	alloc_size = (sizeof(*dca) + priv_size);
-	dca = kzalloc(alloc_size, GFP_KERNEL);
-	if (!dca)
-		return NULL;
-	dca->ops = ops;
+    alloc_size = (sizeof(*dca) + priv_size);
+    dca = kzalloc(alloc_size, GFP_KERNEL);
+    if (!dca)
+        return NULL;
+    dca->ops = ops;
 
-	return dca;
+    return dca;
 }
 EXPORT_SYMBOL_GPL(alloc_dca_provider);
 
