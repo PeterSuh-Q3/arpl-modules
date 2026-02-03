@@ -33,8 +33,8 @@ jobs:
     strategy:
       matrix:
         include:
-          - version: 7.2 
-            platform: v1000nk
+          - version: 7.3 
+            platform: epyc7002
 
     runs-on: ubuntu-18.04
 
