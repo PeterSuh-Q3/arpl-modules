@@ -42,15 +42,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@main
 
-      - name: Install GCC 7
+      - name: Install GCC 12
         run: |
+          export DEBIAN_FRONTEND=noninteractive
           sudo apt-get update
           sudo apt-get install -y software-properties-common
           sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
           sudo apt-get update
-          sudo apt-get install -y gcc-7 g++-7
-          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 70
-          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-7 70
+          sudo apt-get install -y gcc-12 g++-12
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 70
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 70
+          
+          # Set GCC 12 as the default (optional)
+          sudo update-alternatives --set gcc /usr/bin/gcc-12
+          sudo update-alternatives --set g++ /usr/bin/g++-12
+      
+          # Verify installation
+          gcc --version
+          g++ --version        
 
       - name: Init Env
         run: |
