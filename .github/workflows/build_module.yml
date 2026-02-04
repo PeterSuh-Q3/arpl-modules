@@ -169,6 +169,11 @@ jobs:
           else
             echo "[E] ${{ matrix.platform }}-${{ matrix.version }}"
           fi
+
+          make -C "${KSRC}" M="${PWD}" modules_prepare  # symvers 생성
+          make -C "${KSRC}" drivers/i2c/algos/  # i2c_bit_add_bus 제공
+          make -C "${KSRC}" kernel/irq/  # irq_poll_* 제공
+          make -C "${KSRC}" drivers/md/  # raid_class_* 제공 (raid-class.o)          
           make -j`nproc` CC="$CC" CXX="$CXX" CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" -C "${KSRC}" M="${PWD}" ${PARMS} IGNORE_MODVERSIONS=1 modules
           #make -j`nproc` -C "${KSRC}" M="${PWD}" ${PARMS} modules
           while read F; do
