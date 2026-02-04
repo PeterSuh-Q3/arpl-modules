@@ -272,7 +272,7 @@ static int __set_phy_supported(struct phy_device *phydev, u32 max_speed)
  * is connected to a 1G PHY. This function allows the MAC to indicate its
  * maximum speed, and so limit what the PHY will advertise.
  */
-void phy_set_max_speed(struct phy_device *phydev, u32 max_speed)
+int phy_set_max_speed(struct phy_device *phydev, u32 max_speed)
 {
 	int err;
 
