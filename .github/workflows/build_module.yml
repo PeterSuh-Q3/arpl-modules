@@ -171,7 +171,9 @@ jobs:
           fi
 
           touch /source/input/Module.symvers
-          make -j`nproc` CC="$CC" CXX="$CXX" CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" -C "${KSRC}" M="${PWD}" ${PARMS} IGNORE_MODVERSIONS=1 modules
+          cd /source/input
+          sed -i.bak '/sfc-falcon.ko/d; /mpt3sas.ko/d; /megaraid_sas.ko/d' Makefile
+          make clean && make -j`nproc` CC="$CC" CXX="$CXX" CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" -C "${KSRC}" M="${PWD}" ${PARMS} IGNORE_MODVERSIONS=1 modules
           #make -j`nproc` -C "${KSRC}" M="${PWD}" ${PARMS} modules
           while read F; do
             strip -g "${F}"
