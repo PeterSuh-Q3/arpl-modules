@@ -170,7 +170,6 @@ jobs:
           fi
           
           cd /source/input
-          make -C "${KSRC}" M="${PWD}" clean  # KSRC clean
           rm -f Module.symvers *.o *.mod.c *.symvers  # 로컬 정리
           touch Module.symvers
           make -j`nproc` CC="$CC" CXX="$CXX" CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" -C "${KSRC}" M="${PWD}" ${PARMS} IGNORE_MODVERSIONS=1 modules
