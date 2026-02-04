@@ -249,7 +249,7 @@ jobs:
       - name: Upload to Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: modules
+          name: modules-${{ matrix.platform }}-${{ matrix.version }}
           path: |
             ${{ github.workspace }}/source/*.tgz
             
