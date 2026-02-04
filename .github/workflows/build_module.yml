@@ -36,22 +36,19 @@ jobs:
           - version: 7.3 
             platform: epyc7002
 
-    runs-on: ubuntu-latest
-    container:
-      image: ubuntu:20.04
+    runs-on: ubuntu-20.04
+
     steps:
-      - name: Install GCC 7
-        run: |
-          apt-get update
-          apt-get install -y software-properties-common
-          add-apt-repository -y ppa:ubuntu-toolchain-r/test
-          apt-get update
-          apt-get install -y gcc-7 g++-7
-          update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 70
-          update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-7 70
-          
       - name: Checkout
         uses: actions/checkout@main
+
+      - name: Install GCC 7
+        run: |
+          sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+          sudo apt-get update
+          sudo apt-get install -y gcc-7 g++-7
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 70
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-7 70
 
       - name: Init Env
         run: |
@@ -242,5 +239,4 @@ jobs:
       - name: clean
         run: |
           sudo rm -rf ${{ github.workspace }}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}/source/*
-
 
