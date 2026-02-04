@@ -83,12 +83,12 @@ jobs:
             ${{ github.workspace }}/pkgscripts-ng
             # build_env 제외: 동적 파일 문제
           key: ds.${{ matrix.platform }}-${{ matrix.version }}
-          
+
       - name: Get EnvDeploy
         # if: ${{ steps.cache-env.outputs.cache-hit != 'true' }}
         run: |
           ROOT_PATH=${{ github.workspace }}
-
+          rm -rf ${{ github.workspace }}/pkgscripts-ng || true
           git clone https://github.com/SynologyOpenSource/pkgscripts-ng.git ${ROOT_PATH}/pkgscripts-ng
           cd ${ROOT_PATH}/pkgscripts-ng
           # if version == 6.2, checkout 6.2.4
