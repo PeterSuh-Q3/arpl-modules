@@ -35,6 +35,12 @@ jobs:
         include:
           - version: 7.3 
             platform: epyc7002
+          - version: 7.3
+            platform: v1000nk
+          - version: 7.3
+            platform: r1000nk
+          - version: 7.3
+            platform: geminilakenk
 
     runs-on: ubuntu-latest
 
