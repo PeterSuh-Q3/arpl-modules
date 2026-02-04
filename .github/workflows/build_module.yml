@@ -179,57 +179,6 @@ jobs:
 
           sudo cp -a ${ROOT_PATH}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}/source/output ${ROOT_PATH}/source/
           sudo chmod a+rw -R ${ROOT_PATH}/source/output
-    
-      # - name: GCC 12
-      #   if: startsWith(env.CCVER, '12') && startsWith(env.KVER, '4')
-      #   shell: python
-      #   run: |
-      #     # -*- coding: utf-8 -*-
-      # 
-      #     import sys, os, re
-      # 
-      #     # R_X86_64_PC32  = 2
-      #     # R_X86_64_PLT32 = 4
-      # 
-      #     def PLT322PC32(infile, outfile):
-      #         readelfLines = []
-      #         with os.popen('readelf -r "{}"'.format(infile)) as f:
-      #             readelfLines = f.readlines()
-      # 
-      #         offsetList = []
-      #         start = 0
-      #         for idx, line in enumerate(readelfLines):
-      #             if line.startswith('Relocation section'):
-      #                 arr = re.findall(r'0x[0-9a-f]*', line)
-      #                 offat = int(arr[0], base=16)
-      #                 start = idx + 1
-      #                 continue
-      #             if "R_X86_64_PLT32" in line:
-      #                 offsetList.append(offat + (idx - start - 1) * 24 + 8)
-      # 
-      #         if len(offsetList) > 0:
-      #             obj = []
-      #             with open(infile, 'rb') as f:
-      #                 obj = list(f.read())
-      # 
-      #             if len(obj) > 0:
-      #                 for offset in offsetList:
-      #                     assert obj[offset] == (4 if sys.version_info.major >= 3 else 'x04')
-      #                     obj[offset] = 2 if sys.version_info.major >= 3 else 'x02'
-      #         
-      #             with open(outfile, 'wb') as f:
-      #                 f.write(bytes(obj) if sys.version_info.major >= 3 else ''.join(obj))
-      #             return True
-      #         return False
-      # 
-      #     if __name__ == '__main__':
-      #         ROOT_PATH = '${{ github.workspace }}'
-      #         modules = os.listdir(os.path.join(ROOT_PATH, 'source/output'))
-      #         for module in modules:
-      #             module_path = os.path.join(ROOT_PATH, 'source/output', module)
-      #             ret = PLT322PC32(module_path, module_path)
-      #             if ret == False:
-      #                 print('{} no has.'.format(module_path))
 
       - name: Tar to Artifacts
         run: |
