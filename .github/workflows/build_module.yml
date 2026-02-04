@@ -83,6 +83,7 @@ jobs:
             ${{ github.workspace }}/pkgscripts-ng
             ${{ github.workspace }}/build_env
           key: ds.${{ matrix.platform }}-${{ matrix.version }}
+          save-always: true
           
       - name: Get EnvDeploy
         # if: ${{ steps.cache-env.outputs.cache-hit != 'true' }}
