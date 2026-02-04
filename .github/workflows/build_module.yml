@@ -169,7 +169,7 @@ jobs:
           else
             echo "[E] ${{ matrix.platform }}-${{ matrix.version }}"
           fi
-          make -j`nproc` CC="$CC" CXX="$CXX" CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" -C "${KSRC}" M="${PWD}" ${PARMS} modules
+          make -j`nproc` CC="$CC" CXX="$CXX" CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" -C "${KSRC}" M="${PWD}" ${PARMS} IGNORE_MODVERSIONS=1 modules
           #make -j`nproc` -C "${KSRC}" M="${PWD}" ${PARMS} modules
           while read F; do
             strip -g "${F}"
