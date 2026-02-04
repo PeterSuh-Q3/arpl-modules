@@ -168,10 +168,12 @@ jobs:
           else
             echo "[E] ${{ matrix.platform }}-${{ matrix.version }}"
           fi
-
-          touch /source/input/Module.symvers
+          
           cd /source/input
-          make clean && make -j`nproc` CC="$CC" CXX="$CXX" CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" -C "${KSRC}" M="${PWD}" ${PARMS} IGNORE_MODVERSIONS=1 modules
+          make -C "${KSRC}" M="${PWD}" clean  # KSRC clean
+          rm -f Module.symvers *.o *.mod.c *.symvers  # 로컬 정리
+          touch Module.symvers
+          make -j`nproc` CC="$CC" CXX="$CXX" CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" -C "${KSRC}" M="${PWD}" ${PARMS} IGNORE_MODVERSIONS=1 modules
           #make -j`nproc` -C "${KSRC}" M="${PWD}" ${PARMS} modules
           while read F; do
             strip -g "${F}"
