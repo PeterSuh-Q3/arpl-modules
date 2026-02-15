@@ -23,7 +23,7 @@
 #obj-$(CONFIG_SCSI)		+= scsi_mod.o
 #obj-$(CONFIG_BLK_SCSI_REQUEST)	+= scsi_common.o
 
-#obj-$(CONFIG_RAID_ATTRS)	+= raid_class.o
+obj-$(CONFIG_RAID_ATTRS)	+= raid_class.o
 
 # --- NOTE ORDERING HERE ---
 # For kernel non-modular link, transport attributes need to
