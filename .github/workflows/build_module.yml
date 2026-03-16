@@ -172,7 +172,8 @@ jobs:
           cd /source/input
           rm -f Module.symvers *.o *.mod.c *.symvers  # 로컬 정리
           touch Module.symvers
-          make -j`nproc` CC="$CC" CXX="$CXX" CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" -C "${KSRC}" M="/source/input" ${PARMS} IGNORE_MODVERSIONS=1 modules
+          export KBUILD_EXTMOD=/source/input
+          make -j`nproc` CC="$CC" CXX="$CXX" CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" -C "${KSRC}" ${PARMS} IGNORE_MODVERSIONS=1 modules
           #make -j`nproc` -C "${KSRC}" M="${PWD}" ${PARMS} modules
           while read F; do
             strip -g "${F}"
