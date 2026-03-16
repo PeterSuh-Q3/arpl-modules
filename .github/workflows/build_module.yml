@@ -180,8 +180,12 @@ jobs:
           # 2. tracepoint CFLAGS 파일 맨 앞에 삽입 (가장 확실한 방법)
           sed -i '1i CFLAGS_amdgpu_trace_points.o := -I/source/input/drivers/gpu/drm/amd/amdgpu' \
             /source/input/drivers/gpu/drm/amd/amdgpu/Makefile
+
+          # 3. amdgpu_trace.h TRACE_INCLUDE_PATH 절대경로로 수정 (핵심 추가)
+          sed -i 's|#define TRACE_INCLUDE_PATH \.\./\.\./drivers/gpu/drm/amd/amdgpu|#define TRACE_INCLUDE_PATH /source/input/drivers/gpu/drm/amd/amdgpu|' \
+            /source/input/drivers/gpu/drm/amd/amdgpu/amdgpu_trace.h            
           
-          # 3. 적용 확인
+          # 4. 적용 확인
           head -5 /source/input/drivers/gpu/drm/amd/amdgpu/Makefile
           grep 'FULL_AMD_PATH' /source/input/drivers/gpu/drm/amd/amdgpu/Makefile
   
