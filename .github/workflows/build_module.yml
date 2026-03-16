@@ -172,9 +172,17 @@ jobs:
           cd /source/input
           rm -f Module.symvers *.o *.mod.c *.symvers  # 로컬 정리
           touch Module.symvers
-          export KBUILD_EXTMOD=/source/input
-          make -j`nproc` CC="$CC" CXX="$CXX" CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" -C "${KSRC}" ${PARMS} IGNORE_MODVERSIONS=1 modules
+
+          # amdgpu/Makefile FULL_AMD_PATH 한 줄 수정
+          sed -i 's|^FULL_AMD_PATH=$(srctree)/$(src)/..$|FULL_AMD_PATH=$(src)/..|' \
+            /source/input/drivers/gpu/drm/amd/amdgpu/Makefile
+          # 적용 확인
+          grep 'FULL_AMD_PATH\|FULL_AMD_DISPLAY_PATH' \
+            /source/input/drivers/gpu/drm/amd/amdgpu/Makefile
+  
+          make -j`nproc` CC="$CC" CXX="$CXX" CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" -C "${KSRC}" M="${PWD}" ${PARMS} IGNORE_MODVERSIONS=1 modules
           #make -j`nproc` -C "${KSRC}" M="${PWD}" ${PARMS} modules
+          
           while read F; do
             strip -g "${F}"
             echo "Copying `basename ${F}`"
@@ -210,4 +218,3 @@ jobs:
       - name: clean
         run: |
           sudo rm -rf ${{ github.workspace }}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}/source/*
-
