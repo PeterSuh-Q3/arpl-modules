@@ -173,15 +173,17 @@ jobs:
           rm -f Module.symvers *.o *.mod.c *.symvers  # 로컬 정리
           touch Module.symvers
 
-          # amdgpu/Makefile FULL_AMD_PATH 한 줄 수정
+          # 1. FULL_AMD_PATH 수정
           sed -i 's|^FULL_AMD_PATH=$(srctree)/$(src)/..$|FULL_AMD_PATH=$(src)/..|' \
             /source/input/drivers/gpu/drm/amd/amdgpu/Makefile
-          # tracepoint 헤더 경로 추가
-          sed -i '/^ccflags-y/i CFLAGS_amdgpu_trace_points.o := -I/source/input/drivers/gpu/drm/amd/amdgpu' \
-            /source/input/drivers/gpu/drm/amd/amdgpu/Makefile            
-          # 적용 확인
-          grep 'FULL_AMD_PATH\|FULL_AMD_DISPLAY_PATH' \
+          
+          # 2. tracepoint CFLAGS 파일 맨 앞에 삽입 (가장 확실한 방법)
+          sed -i '1i CFLAGS_amdgpu_trace_points.o := -I/source/input/drivers/gpu/drm/amd/amdgpu' \
             /source/input/drivers/gpu/drm/amd/amdgpu/Makefile
+          
+          # 3. 적용 확인
+          head -5 /source/input/drivers/gpu/drm/amd/amdgpu/Makefile
+          grep 'FULL_AMD_PATH' /source/input/drivers/gpu/drm/amd/amdgpu/Makefile
   
           make -j`nproc` CC="$CC" CXX="$CXX" CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" -C "${KSRC}" M="${PWD}" ${PARMS} IGNORE_MODVERSIONS=1 modules
           #make -j`nproc` -C "${KSRC}" M="${PWD}" ${PARMS} modules
