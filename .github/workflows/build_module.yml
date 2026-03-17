@@ -170,13 +170,21 @@ jobs:
           fi
           
           cd /source/input
-          rm -f Module.symvers *.o *.mod.c *.symvers  # 로컬 정리
-          # 빈 파일 대신 KSRC의 심볼 테이블 복사
+
+          # ── 핵심 수정 부분 시작 ─────────────────────────────────────
+          # 1. 빌드 아티팩트 완전 정리 (Module.symvers 포함)
+          make -C "${KSRC}" M="${PWD}" clean 2>/dev/null || true
+          rm -f Module.symvers modules.order *.o *.mod.c .*.cmd
+
+          # 2. KSRC의 Module.symvers를 작업 디렉토리로 복사 (단일 출처 유지)
+          #    KBUILD_EXTRA_SYMBOLS는 사용하지 않음 — 이중 로드 방지
           if [ -f "${KSRC}/Module.symvers" ]; then
-            cp ${KSRC}/Module.symvers ./Module.symvers
+            cp "${KSRC}/Module.symvers" ./Module.symvers
           else
+            echo "[W] ${KSRC}/Module.symvers not found, creating empty"
             touch Module.symvers
           fi
+          # ── 핵심 수정 부분 끝 ───────────────────────────────────────
           
           make -j`nproc` CC="$CC" CXX="$CXX" \
           CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" \
