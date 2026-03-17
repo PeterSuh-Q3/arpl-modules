@@ -143,6 +143,10 @@ jobs:
 
           sudo cp -a ${ROOT_PATH}/src/${KVER:0:1}.x ${ROOT_PATH}/source/input
 
+          # 이전 빌드 잔여물 제거
+          sudo rm -f ${ROOT_PATH}/source/input/Module.symvers
+          sudo rm -f ${ROOT_PATH}/source/input/modules.order
+
           sudo cp -a ${ROOT_PATH}/source ${ROOT_PATH}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}/
 
       - name: Make
