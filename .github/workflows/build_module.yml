@@ -141,14 +141,19 @@ jobs:
           repo=${{ env.repo }}
           KVER=${{ env.KVER }}
 
-          sudo cp -a ${ROOT_PATH}/src/${KVER:0:1}.x ${ROOT_PATH}/source/input
-
-          # 이전 빌드 잔여물 제거
-          sudo rm -f ${ROOT_PATH}/source/input/Module.symvers
-          sudo rm -f ${ROOT_PATH}/source/input/modules.order
-
+          # 이전 빌드 잔여물 완전 제거
+          sudo rm -rf ${ROOT_PATH}/source/input
+          mkdir -p ${ROOT_PATH}/source/input
+      
+          sudo cp -a ${ROOT_PATH}/src/${KVER:0:1}.x/. ${ROOT_PATH}/source/input/
+      
+          # 빌드 아티팩트 명시적 제거 (혹시 src/ 내에 존재할 경우 대비)
+          sudo find ${ROOT_PATH}/source/input -name "*.ko" -delete
+          sudo find ${ROOT_PATH}/source/input -name "Module.symvers" -delete
+          sudo find ${ROOT_PATH}/source/input -name "modules.order" -delete
+      
           sudo cp -a ${ROOT_PATH}/source ${ROOT_PATH}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}/
-
+          
       - name: Make
         run: |
           ROOT_PATH=${{ github.workspace }}
