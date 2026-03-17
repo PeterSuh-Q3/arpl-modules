@@ -172,30 +172,6 @@ jobs:
           cd /source/input
           rm -f Module.symvers *.o *.mod.c *.symvers  # 로컬 정리
           touch Module.symvers
-
-          # 1. FULL_AMD_PATH 수정
-          sed -i 's|^FULL_AMD_PATH=$(srctree)/$(src)/..$|FULL_AMD_PATH=$(src)/..|' \
-            /source/input/drivers/gpu/drm/amd/amdgpu/Makefile
-          
-          # 2. tracepoint CFLAGS 삽입
-          sed -i '1i CFLAGS_amdgpu_trace_points.o := -I/source/input/drivers/gpu/drm/amd/amdgpu' \
-            /source/input/drivers/gpu/drm/amd/amdgpu/Makefile
-          
-          # 3. TRACE_INCLUDE_PATH 절대경로 수정
-          sed -i 's|#define TRACE_INCLUDE_PATH \.\./\.\./drivers/gpu/drm/amd/amdgpu|#define TRACE_INCLUDE_PATH /source/input/drivers/gpu/drm/amd/amdgpu|' \
-            /source/input/drivers/gpu/drm/amd/amdgpu/amdgpu_trace.h
-          
-          # 4. amdkfd 블록 제거 ← 이번에 새로 추가
-          sed -i '/ifneq ($(CONFIG_HSA_AMD),)/,/^endif/d' \
-            /source/input/drivers/gpu/drm/amd/amdgpu/Makefile
-          
-          # 5. acp 블록 제거 ← 이번에 새로 추가
-          sed -i '/ifneq ($(CONFIG_DRM_AMD_ACP),)/,/^endif/d' \
-            /source/input/drivers/gpu/drm/amd/amdgpu/Makefile
-          
-          # 6. 적용 확인
-          grep -n 'HSA_AMD\|DRM_AMD_ACP\|amdkfd/Makefile\|acp/Makefile' \
-            /source/input/drivers/gpu/drm/amd/amdgpu/Makefile
   
           make -j`nproc` CC="$CC" CXX="$CXX" CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" -C "${KSRC}" M="${PWD}" ${PARMS} IGNORE_MODVERSIONS=1 modules
           #make -j`nproc` -C "${KSRC}" M="${PWD}" ${PARMS} modules
