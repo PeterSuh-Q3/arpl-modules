@@ -23,7 +23,9 @@
 # Makefile for the drm device driver.  This driver provides support for the
 # Direct Rendering Infrastructure (DRI) in XFree86 4.1.0 and higher.
 
-FULL_AMD_PATH=$(srctree)/$(src)/..
+CFLAGS_amdgpu_trace_points.o := -I$(src)
+
+FULL_AMD_PATH=$(src)/..
 DISPLAY_FOLDER_NAME=display
 FULL_AMD_DISPLAY_PATH = $(FULL_AMD_PATH)/$(DISPLAY_FOLDER_NAME)
 
@@ -168,24 +170,24 @@ amdgpu-y += \
 # add amdkfd interfaces
 amdgpu-y += amdgpu_amdkfd.o
 
-ifneq ($(CONFIG_HSA_AMD),)
-AMDKFD_PATH := ../amdkfd
-include $(FULL_AMD_PATH)/amdkfd/Makefile
-amdgpu-y += $(AMDKFD_FILES)
-amdgpu-y += \
-	amdgpu_amdkfd_fence.o \
-	amdgpu_amdkfd_gpuvm.o \
-	amdgpu_amdkfd_gfx_v8.o \
-	amdgpu_amdkfd_gfx_v9.o \
-	amdgpu_amdkfd_arcturus.o \
-	amdgpu_amdkfd_gfx_v10.o \
-	amdgpu_amdkfd_gfx_v10_3.o
+#ifneq ($(CONFIG_HSA_AMD),)
+#AMDKFD_PATH := ../amdkfd
+#include $(FULL_AMD_PATH)/amdkfd/Makefile
+#amdgpu-y += $(AMDKFD_FILES)
+#amdgpu-y += \
+#	amdgpu_amdkfd_fence.o \
+#	amdgpu_amdkfd_gpuvm.o \
+#	amdgpu_amdkfd_gfx_v8.o \
+#	amdgpu_amdkfd_gfx_v9.o \
+#	amdgpu_amdkfd_arcturus.o \
+#	amdgpu_amdkfd_gfx_v10.o \
+#	amdgpu_amdkfd_gfx_v10_3.o
 
-ifneq ($(CONFIG_DRM_AMDGPU_CIK),)
-amdgpu-y += amdgpu_amdkfd_gfx_v7.o
-endif
+#ifneq ($(CONFIG_DRM_AMDGPU_CIK),)
+#amdgpu-y += amdgpu_amdkfd_gfx_v7.o
+#endif
 
-endif
+#endif
 
 # add cgs
 amdgpu-y += amdgpu_cgs.o
@@ -194,14 +196,14 @@ amdgpu-y += amdgpu_cgs.o
 amdgpu-y += amdgpu_job.o
 
 # ACP componet
-ifneq ($(CONFIG_DRM_AMD_ACP),)
-amdgpu-y += amdgpu_acp.o
+#ifneq ($(CONFIG_DRM_AMD_ACP),)
+#amdgpu-y += amdgpu_acp.o
 
-AMDACPPATH := ../acp
-include $(FULL_AMD_PATH)/acp/Makefile
+#AMDACPPATH := ../acp
+#include $(FULL_AMD_PATH)/acp/Makefile
 
-amdgpu-y += $(AMD_ACP_FILES)
-endif
+#amdgpu-y += $(AMD_ACP_FILES)
+#endif
 
 amdgpu-$(CONFIG_COMPAT) += amdgpu_ioc32.o
 amdgpu-$(CONFIG_VGA_SWITCHEROO) += amdgpu_atpx_handler.o
