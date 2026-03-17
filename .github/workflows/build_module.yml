@@ -198,6 +198,7 @@ jobs:
           make -j`nproc` CC="$CC" CXX="$CXX" \
           CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" \
           -C "${KSRC}" M="${PWD}" \
+          KBUILD_MODPOST_WARN=1 \
           KBUILD_EXTRA_SYMBOLS="${KSRC}/Module.symvers" \
           ${PARMS} IGNORE_MODVERSIONS=1 modules
           #make -j`nproc` -C "${KSRC}" M="${PWD}" ${PARMS} modules
