@@ -194,14 +194,14 @@ jobs:
             touch Module.symvers
           fi
           # ── 핵심 수정 부분 끝 ───────────────────────────────────────
-          
-          make -j`nproc` CC="$CC" CXX="$CXX" \
-          CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" \
-          -C "${KSRC}" M="${PWD}" \
-          KBUILD_MODPOST_WARN=1 \
-          KBUILD_EXTRA_SYMBOLS="${KSRC}/Module.symvers" \
-          ${PARMS} IGNORE_MODVERSIONS=1 modules
-          #make -j`nproc` -C "${KSRC}" M="${PWD}" ${PARMS} modules
+
+          make M=drivers/video/backlight
+          #make -j`nproc` CC="$CC" CXX="$CXX" \
+          #CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" \
+          #-C "${KSRC}" M="${PWD}" \
+          #KBUILD_MODPOST_WARN=1 \
+          #KBUILD_EXTRA_SYMBOLS="${KSRC}/Module.symvers" \
+          #${PARMS} IGNORE_MODVERSIONS=1 modules
           
           while read F; do
             strip -g "${F}"
