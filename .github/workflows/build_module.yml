@@ -202,15 +202,15 @@ jobs:
 
           # dma-buf } 누락 일괄 수정
           FILES=(
-            "src/5.x/drivers/dma-buf/dma-fence-array.c"
-            "src/5.x/drivers/dma-buf/dma-fence-chain.c"
-            "src/5.x/drivers/dma-buf/dma-resv.c"
-            "src/5.x/drivers/dma-buf/dma-heap.c"
-            "src/5.x/drivers/dma-buf/st-dma-fence-chain.c"
-            "src/5.x/drivers/dma-buf/st-dma-fence.c"
-            "src/5.x/drivers/dma-buf/sw_sync.c"
-            "src/5.x/drivers/dma-buf/sync_debug.c"
-            "src/5.x/drivers/dma-buf/sync_file.c"
+            "drivers/dma-buf/dma-fence-array.c"
+            "drivers/dma-buf/dma-fence-chain.c"
+            "drivers/dma-buf/dma-resv.c"
+            "drivers/dma-buf/dma-heap.c"
+            "drivers/dma-buf/st-dma-fence-chain.c"
+            "drivers/dma-buf/st-dma-fence.c"
+            "drivers/dma-buf/sw_sync.c"
+            "drivers/dma-buf/sync_debug.c"
+            "drivers/dma-buf/sync_file.c"
           )
           for f in "${FILES[@]}"; do
             if [ ! -f "$f" ]; then echo "SKIP (not found) $f"; continue; fi
