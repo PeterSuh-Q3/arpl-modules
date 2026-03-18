@@ -1471,4 +1471,6 @@ static void __exit dma_buf_deinit(void)
 }
 module_exit(dma_buf_deinit);   // ← __exitcall → module_exit
 
+MODULE_AUTHOR("Thomas Hellstrom <thomas.hellstrom@intel.com>");
+MODULE_DESCRIPTION("DMA reservation object implementation");
 MODULE_LICENSE("GPL v2");
