@@ -185,97 +185,99 @@ jobs:
           make -C "${KSRC}" M="${PWD}" clean 2>/dev/null || true
           rm -f Module.symvers modules.order *.o *.mod.c .*.cmd
 
-          # 2. KSRC의 Module.symvers를 작업 디렉토리로 복사 (단일 출처 유지)
-          #    KBUILD_EXTRA_SYMBOLS는 사용하지 않음 — 이중 로드 방지
+          # ── 수정된 심볼 처리 ──────────────────────────────────
+          # KBUILD_EXTRA_SYMBOLS 를 사용하지 않는다.
+          # kbuild 는 M= 디렉토리의 Module.symvers 를 자동으로 읽는다.
           if [ -f "${KSRC}/Module.symvers" ]; then
-            cp "${KSRC}/Module.symvers" ./Module.symvers
+            cp "${KSRC}/Module.symvers" "${PWD}/Module.symvers"
           else
             echo "[W] ${KSRC}/Module.symvers not found, creating empty"
-            touch Module.symvers
+            touch "${PWD}/Module.symvers"
           fi
-          # ── 핵심 수정 부분 끝 ───────────────────────────────────────
-
-          make -j`nproc` CC="$CC" CXX="$CXX" \
-          CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" \
-          -C "${KSRC}" M="${PWD}" \
-          KBUILD_MODPOST_WARN=1 \
-          KBUILD_EXTRA_SYMBOLS="${KSRC}/Module.symvers" \
-          ${PARMS} IGNORE_MODVERSIONS=1 modules
-
-          # ── 의존성 체크 및 리포트 생성 ─────────────────────────────
-          REPORT="/source/output/amdgpu-dep-report.txt"
-          AMD_KO=$(find /source/output -name "amdgpu.ko" | head -1)
-
-          echo "=====================================" > ${REPORT}
-          echo " amdgpu.ko Dependency Report"         >> ${REPORT}
-          echo " Platform : ${{ matrix.platform }}"   >> ${REPORT}
-          echo " Built at : $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> ${REPORT}
-          echo "=====================================" >> ${REPORT}
-
-          if [ -z "${AMD_KO}" ]; then
-            echo "[ERROR] amdgpu.ko not found in /source/output" >> ${REPORT}
-          else
-            echo "" >> ${REPORT}
-
-            # ── 방법 1: modinfo 직접 의존성 ──────────────────────────
-            echo "[1] modinfo direct depends:" >> ${REPORT}
-            modinfo "${AMD_KO}" 2>&1 | grep -E '^(filename|version|depends|vermagic|srcversion):' >> ${REPORT}
-
-            # ── 방법 2: nm 심볼 미해결 검사 ──────────────────────────
-            echo "" >> ${REPORT}
-            echo "[2] Undefined symbol check (vs KSRC/Module.symvers + output *.ko):" >> ${REPORT}
-
-            # KSRC에서 export된 심볼 수집
-            KNOWN_SYMS=$(mktemp)
-            awk '{print $2}' "${KSRC}/Module.symvers" 2>/dev/null > ${KNOWN_SYMS}
-
-            # 출력 디렉토리 내 다른 .ko에서 export된 심볼 추가
-            for KO in $(find /source/output -name "*.ko" ! -name "amdgpu.ko"); do
-              nm --defined-only "${KO}" 2>/dev/null | awk '{print $3}' >> ${KNOWN_SYMS}
-            done
-
-            # amdgpu.ko의 undefined 심볼과 대조
-            UNRESOLVED=$(nm --undefined-only "${AMD_KO}" 2>/dev/null \
-              | awk '{print $2}' \
-              | grep -v '^$' \
-              | grep -vFf ${KNOWN_SYMS} || true)
-
-            if [ -z "${UNRESOLVED}" ]; then
-              echo "  OK: All symbols resolved." >> ${REPORT}
-            else
-              echo "  [WARN] Unresolved symbols detected:" >> ${REPORT}
-              echo "${UNRESOLVED}" | sed 's/^/    - /' >> ${REPORT}
-            fi
-            rm -f ${KNOWN_SYMS}
-
-            # ── 방법 3: depmod -n 의존성 트리 ────────────────────────
-            echo "" >> ${REPORT}
-            echo "[3] depmod -n dependency tree:" >> ${REPORT}
-
-            KVER_FULL=$(modinfo "${AMD_KO}" | grep '^vermagic' | awk '{print $2}')
-            DEPMOD_TMP=$(mktemp -d)
-            MOD_DIR="${DEPMOD_TMP}/lib/modules/${KVER_FULL}"
-            mkdir -p "${MOD_DIR}/kernel/drivers/gpu/drm/amd/amdgpu"
-
-            # 출력 .ko 전체 복사
-            find /source/output -name "*.ko" -exec cp {} "${MOD_DIR}/" \;
-
-            depmod -n -b "${DEPMOD_TMP}" "${KVER_FULL}" 2>&1 \
-              | grep "amdgpu" >> ${REPORT} || echo "  (no amdgpu entry in depmod output)" >> ${REPORT}
-
-            rm -rf ${DEPMOD_TMP}
-
-            echo "" >> ${REPORT}
-            echo "[4] Total output modules: $(find /source/output -name '*.ko' | wc -l)" >> ${REPORT}
-          fi
-          echo "=====================================" >> ${REPORT}
-          # ── 리포트 생성 끝 ─────────────────────────────────────────
           
+          make -j$(nproc) CC="$CC" CXX="$CXX" \
+            CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" \
+            -C "${KSRC}" M="${PWD}" \
+            KBUILD_MODPOST_WARN=0 \
+            ${PARMS} modules
+          
+          # ── 1. 먼저 .ko 를 output 으로 복사 ─────────────────────
           while read F; do
             strip -g "${F}"
-            echo "Copying `basename ${F}`"
+            echo "Copying $(basename ${F})"
             cp "${F}" "/source/output"
-          done < <(find ${PWD} -name \*.ko)
+          done < <(find "${PWD}" -name \*.ko)
+          
+          # ── 2. 복사 완료 후 리포트 생성 ─────────────────────────
+          REPORT="/source/output/amdgpu-dep-report.txt"
+          # amdgpu.ko 는 빌드 트리에서 탐색 (output 이 아닌 PWD 하위)
+          AMD_KO=$(find "${PWD}" -name "amdgpu.ko" | head -1)
+          
+          {
+            echo "====================================="
+            echo " amdgpu.ko Dependency Report"
+            echo " Platform : ${{ matrix.platform }}"
+            echo " Kernel   : ${KVER}"
+            echo " Built at : $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+            echo "====================================="
+          
+            if [ -z "${AMD_KO}" ]; then
+              echo "[ERROR] amdgpu.ko not found in build tree — build may have failed"
+            else
+              echo ""
+              echo "[1] modinfo:"
+              modinfo "${AMD_KO}" 2>&1 \
+                | grep -E '^(filename|version|depends|vermagic|srcversion):'
+          
+              echo ""
+              echo "[2] Undefined symbol check:"
+              KNOWN_SYMS=$(mktemp)
+              # KSRC Module.symvers 에서 심볼 수집
+              awk '{print $2}' "${KSRC}/Module.symvers" 2>/dev/null > "${KNOWN_SYMS}"
+              # 출력된 다른 .ko 에서 정의 심볼 수집
+              while IFS= read -r KO; do
+                nm --defined-only "${KO}" 2>/dev/null | awk '{print $3}'
+              done < <(find /source/output -name "*.ko" ! -name "amdgpu.ko") \
+                >> "${KNOWN_SYMS}"
+          
+              UNRESOLVED=$(nm --undefined-only "${AMD_KO}" 2>/dev/null \
+                | awk '{print $2}' | grep -v '^$' \
+                | grep -vFxf "${KNOWN_SYMS}" || true)
+          
+              if [ -z "${UNRESOLVED}" ]; then
+                echo "  OK: All symbols resolved."
+              else
+                UNRESOLVED_COUNT=$(echo "${UNRESOLVED}" | wc -l)
+                echo "  [WARN] ${UNRESOLVED_COUNT} unresolved symbol(s):"
+                echo "${UNRESOLVED}" | head -50 | sed 's/^/    - /'
+                [ "${UNRESOLVED_COUNT}" -gt 50 ] \
+                  && echo "    ... (truncated, total: ${UNRESOLVED_COUNT})"
+              fi
+              rm -f "${KNOWN_SYMS}"
+          
+              echo ""
+              echo "[3] depmod -n:"
+              KVER_FULL=$(modinfo "${AMD_KO}" 2>/dev/null \
+                | grep '^vermagic' | awk '{print $2}')
+              if command -v depmod >/dev/null 2>&1 && [ -n "${KVER_FULL}" ]; then
+                DEPMOD_TMP=$(mktemp -d)
+                MOD_DIR="${DEPMOD_TMP}/lib/modules/${KVER_FULL}"
+                mkdir -p "${MOD_DIR}"
+                find /source/output -name "*.ko" -exec cp {} "${MOD_DIR}/" \;
+                depmod -n -b "${DEPMOD_TMP}" "${KVER_FULL}" 2>&1 \
+                  | grep "amdgpu" \
+                  || echo "  (no amdgpu entry — depmod may lack dependency info)"
+                rm -rf "${DEPMOD_TMP}"
+              else
+                echo "  [SKIP] depmod not available or vermagic empty"
+              fi
+          
+              echo ""
+              echo "[4] Total modules in output: $(find /source/output -name '*.ko' | wc -l)"
+              echo "[5] amdgpu.ko size: $(du -h ${AMD_KO} | awk '{print $1}')"
+            fi
+            echo "====================================="
+          } | tee "${REPORT}"
           EOF
 
           sudo cp -a ${ROOT_PATH}/build_env/ds.${{ matrix.platform }}-${{ matrix.version }}/source/output ${ROOT_PATH}/source/
