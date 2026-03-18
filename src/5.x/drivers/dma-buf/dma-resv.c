@@ -686,4 +686,7 @@ retry:
 	return ret;
 }
 EXPORT_SYMBOL_GPL(dma_resv_test_signaled_rcu);
+
+MODULE_AUTHOR("Thomas Hellstrom <thomas.hellstrom@intel.com>");
+MODULE_DESCRIPTION("DMA reservation object implementation");
 MODULE_LICENSE("GPL v2");
