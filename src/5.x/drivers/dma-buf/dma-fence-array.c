@@ -13,8 +13,6 @@
 #include <linux/slab.h>
 #include <linux/dma-fence-array.h>
 
-MODULE_LICENSE("GPL v2");
-
 #define PENDING_ERROR 1
 
 static const char *dma_fence_array_get_driver_name(struct dma_fence *fence)
