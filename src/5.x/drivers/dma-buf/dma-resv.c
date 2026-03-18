@@ -32,6 +32,11 @@
  * Authors: Thomas Hellstrom <thellstrom-at-vmware-dot-com>
  */
 
+/* DSM 7.3 kernel compat: rcu_read_unlock_strict not exported */
+#ifndef rcu_read_unlock_strict
+#define rcu_read_unlock_strict() rcu_read_unlock()
+#endif
+
 #include <linux/dma-resv.h>
 #include <linux/export.h>
 #include <linux/mm.h>
