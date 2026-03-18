@@ -200,24 +200,26 @@ jobs:
             touch "${PWD}/Module.symvers"
           fi
 
-          # dma-buf 전체 C파일에서 MODULE_LICENSE 직전 } 누락 일괄 수정
+          # dma-buf } 누락 일괄 수정
           FILES=(
-            src/5.x/drivers/dma-buf/dma-resv.c
-            src/5.x/drivers/dma-buf/dma-heap.c
-            src/5.x/drivers/dma-buf/st-dma-fence-chain.c
-            src/5.x/drivers/dma-buf/st-dma-fence.c
-            src/5.x/drivers/dma-buf/sw_sync.c
-            src/5.x/drivers/dma-buf/sync_debug.c
-            src/5.x/drivers/dma-buf/sync_file.c
+            "src/5.x/drivers/dma-buf/dma-fence-array.c"
+            "src/5.x/drivers/dma-buf/dma-fence-chain.c"
+            "src/5.x/drivers/dma-buf/dma-resv.c"
+            "src/5.x/drivers/dma-buf/dma-heap.c"
+            "src/5.x/drivers/dma-buf/st-dma-fence-chain.c"
+            "src/5.x/drivers/dma-buf/st-dma-fence.c"
+            "src/5.x/drivers/dma-buf/sw_sync.c"
+            "src/5.x/drivers/dma-buf/sync_debug.c"
+            "src/5.x/drivers/dma-buf/sync_file.c"
           )
-          
           for f in "${FILES[@]}"; do
-            # MODULE_LICENSE 바로 앞 비어있지 않은 줄이 } 가 아니면 삽입
+            if [ ! -f "$f" ]; then echo "SKIP (not found) $f"; continue; fi
             LINE=$(grep -n "MODULE_LICENSE" "$f" | head -1 | cut -d: -f1)
-            PREV=$(awk "NR==$((LINE-1)){print}" "$f" | tr -d '[:space:]')
+            [ -z "$LINE" ] && echo "SKIP (no MODULE_LICENSE) $f" && continue
+            PREV=$(sed -n "$((LINE-1))p" "$f" | tr -d '[:space:]')
             if [ "$PREV" != "}" ]; then
               sed -i "${LINE}i\}" "$f"
-              echo "[FIXED] $f (line $LINE)"
+              echo "[FIXED] $f (before line $LINE)"
             else
               echo "[OK]    $f"
             fi
