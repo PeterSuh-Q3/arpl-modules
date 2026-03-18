@@ -1463,3 +1463,5 @@ static void __exit dma_buf_deinit(void)
 	kern_unmount(dma_buf_mnt);
 }
 module_exit(dma_buf_deinit);   // ← __exitcall → module_exit
+
+MODULE_LICENSE("GPL v2");
