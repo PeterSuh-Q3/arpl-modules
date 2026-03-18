@@ -195,13 +195,81 @@ jobs:
           fi
           # ── 핵심 수정 부분 끝 ───────────────────────────────────────
 
-          make M=drivers/video/backlight
-          #make -j`nproc` CC="$CC" CXX="$CXX" \
-          #CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" \
-          #-C "${KSRC}" M="${PWD}" \
-          #KBUILD_MODPOST_WARN=1 \
-          #KBUILD_EXTRA_SYMBOLS="${KSRC}/Module.symvers" \
-          #${PARMS} IGNORE_MODVERSIONS=1 modules
+          make -j`nproc` CC="$CC" CXX="$CXX" \
+          CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" \
+          -C "${KSRC}" M="${PWD}" \
+          KBUILD_MODPOST_WARN=1 \
+          KBUILD_EXTRA_SYMBOLS="${KSRC}/Module.symvers" \
+          ${PARMS} IGNORE_MODVERSIONS=1 modules
+
+          # ── 의존성 체크 및 리포트 생성 ─────────────────────────────
+          REPORT="/source/output/amdgpu-dep-report.txt"
+          AMD_KO=$(find /source/output -name "amdgpu.ko" | head -1)
+
+          echo "=====================================" > ${REPORT}
+          echo " amdgpu.ko Dependency Report"         >> ${REPORT}
+          echo " Platform : ${{ matrix.platform }}"   >> ${REPORT}
+          echo " Built at : $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> ${REPORT}
+          echo "=====================================" >> ${REPORT}
+
+          if [ -z "${AMD_KO}" ]; then
+            echo "[ERROR] amdgpu.ko not found in /source/output" >> ${REPORT}
+          else
+            echo "" >> ${REPORT}
+
+            # ── 방법 1: modinfo 직접 의존성 ──────────────────────────
+            echo "[1] modinfo direct depends:" >> ${REPORT}
+            modinfo "${AMD_KO}" 2>&1 | grep -E '^(filename|version|depends|vermagic|srcversion):' >> ${REPORT}
+
+            # ── 방법 2: nm 심볼 미해결 검사 ──────────────────────────
+            echo "" >> ${REPORT}
+            echo "[2] Undefined symbol check (vs KSRC/Module.symvers + output *.ko):" >> ${REPORT}
+
+            # KSRC에서 export된 심볼 수집
+            KNOWN_SYMS=$(mktemp)
+            awk '{print $2}' "${KSRC}/Module.symvers" 2>/dev/null > ${KNOWN_SYMS}
+
+            # 출력 디렉토리 내 다른 .ko에서 export된 심볼 추가
+            for KO in $(find /source/output -name "*.ko" ! -name "amdgpu.ko"); do
+              nm --defined-only "${KO}" 2>/dev/null | awk '{print $3}' >> ${KNOWN_SYMS}
+            done
+
+            # amdgpu.ko의 undefined 심볼과 대조
+            UNRESOLVED=$(nm --undefined-only "${AMD_KO}" 2>/dev/null \
+              | awk '{print $2}' \
+              | grep -v '^$' \
+              | grep -vFf ${KNOWN_SYMS} || true)
+
+            if [ -z "${UNRESOLVED}" ]; then
+              echo "  OK: All symbols resolved." >> ${REPORT}
+            else
+              echo "  [WARN] Unresolved symbols detected:" >> ${REPORT}
+              echo "${UNRESOLVED}" | sed 's/^/    - /' >> ${REPORT}
+            fi
+            rm -f ${KNOWN_SYMS}
+
+            # ── 방법 3: depmod -n 의존성 트리 ────────────────────────
+            echo "" >> ${REPORT}
+            echo "[3] depmod -n dependency tree:" >> ${REPORT}
+
+            KVER_FULL=$(modinfo "${AMD_KO}" | grep '^vermagic' | awk '{print $2}')
+            DEPMOD_TMP=$(mktemp -d)
+            MOD_DIR="${DEPMOD_TMP}/lib/modules/${KVER_FULL}"
+            mkdir -p "${MOD_DIR}/kernel/drivers/gpu/drm/amd/amdgpu"
+
+            # 출력 .ko 전체 복사
+            find /source/output -name "*.ko" -exec cp {} "${MOD_DIR}/" \;
+
+            depmod -n -b "${DEPMOD_TMP}" "${KVER_FULL}" 2>&1 \
+              | grep "amdgpu" >> ${REPORT} || echo "  (no amdgpu entry in depmod output)" >> ${REPORT}
+
+            rm -rf ${DEPMOD_TMP}
+
+            echo "" >> ${REPORT}
+            echo "[4] Total output modules: $(find /source/output -name '*.ko' | wc -l)" >> ${REPORT}
+          fi
+          echo "=====================================" >> ${REPORT}
+          # ── 리포트 생성 끝 ─────────────────────────────────────────
           
           while read F; do
             strip -g "${F}"
