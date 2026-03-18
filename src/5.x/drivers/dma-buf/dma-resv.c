@@ -681,5 +681,3 @@ retry:
 	return ret;
 }
 EXPORT_SYMBOL_GPL(dma_resv_test_signaled_rcu);
-
-MODULE_LICENSE("GPL v2");
