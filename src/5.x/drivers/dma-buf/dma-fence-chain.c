@@ -256,7 +256,3 @@ void dma_fence_chain_init(struct dma_fence_chain *chain,
 		       &chain->lock, context, seqno);
 }
 EXPORT_SYMBOL(dma_fence_chain_init);
-
-MODULE_AUTHOR("Thomas Hellstrom <thomas.hellstrom@intel.com>");
-MODULE_DESCRIPTION("DMA reservation object implementation");
-MODULE_LICENSE("GPL v2");
