@@ -201,4 +201,7 @@ bool dma_fence_match_context(struct dma_fence *fence, u64 context)
 	return true;
 }
 EXPORT_SYMBOL(dma_fence_match_context);
+
+MODULE_AUTHOR("Thomas Hellstrom <thomas.hellstrom@intel.com>");
+MODULE_DESCRIPTION("DMA reservation object implementation");
 MODULE_LICENSE("GPL v2");
