@@ -13,6 +13,8 @@
 #include <linux/slab.h>
 #include <linux/dma-fence-array.h>
 
+MODULE_LICENSE("GPL v2");
+
 #define PENDING_ERROR 1
 
 static const char *dma_fence_array_get_driver_name(struct dma_fence *fence)
@@ -201,5 +203,3 @@ bool dma_fence_match_context(struct dma_fence *fence, u64 context)
 	return true;
 }
 EXPORT_SYMBOL(dma_fence_match_context);
-
-MODULE_LICENSE("GPL v2");
