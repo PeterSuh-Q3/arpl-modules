@@ -201,30 +201,30 @@ jobs:
           fi
 
           # dma-buf } 누락 일괄 수정
-          FILES=(
-            "drivers/dma-buf/dma-fence-array.c"
-            "drivers/dma-buf/dma-fence-chain.c"
-            "drivers/dma-buf/dma-heap.c"
-            "drivers/dma-buf/dma-resv.c"            
-            "drivers/dma-buf/st-dma-fence-chain.c"
-            "drivers/dma-buf/st-dma-fence.c"
-            "drivers/dma-buf/sw_sync.c"
-            "drivers/dma-buf/sync_debug.c"
-            "drivers/dma-buf/sync_file.c"
-            "drivers/dma-buf/seqno-fence.c"
-          )
-          for f in "${FILES[@]}"; do
-            if [ ! -f "$f" ]; then echo "SKIP (not found) $f"; continue; fi
-            LINE=$(grep -n "MODULE_LICENSE" "$f" | head -1 | cut -d: -f1)
-            [ -z "$LINE" ] && echo "SKIP (no MODULE_LICENSE) $f" && continue
-            PREV=$(sed -n "$((LINE-1))p" "$f" | tr -d '[:space:]')
-            if [ "$PREV" != "}" ]; then
-              sed -i "${LINE}i\}" "$f"
-              echo "[FIXED] $f (before line $LINE)"
-            else
-              echo "[OK]    $f"
-            fi
-          done
+          #FILES=(
+          #  "drivers/dma-buf/dma-fence-array.c"
+          #  "drivers/dma-buf/dma-fence-chain.c"
+          #  "drivers/dma-buf/dma-heap.c"
+          #  "drivers/dma-buf/dma-resv.c"            
+          #  "drivers/dma-buf/st-dma-fence-chain.c"
+          #  "drivers/dma-buf/st-dma-fence.c"
+          #  "drivers/dma-buf/sw_sync.c"
+          #  "drivers/dma-buf/sync_debug.c"
+          #  "drivers/dma-buf/sync_file.c"
+          #  "drivers/dma-buf/seqno-fence.c"
+          #)
+          #for f in "${FILES[@]}"; do
+          #  if [ ! -f "$f" ]; then echo "SKIP (not found) $f"; continue; fi
+          #  LINE=$(grep -n "MODULE_LICENSE" "$f" | head -1 | cut -d: -f1)
+          #  [ -z "$LINE" ] && echo "SKIP (no MODULE_LICENSE) $f" && continue
+          #  PREV=$(sed -n "$((LINE-1))p" "$f" | tr -d '[:space:]')
+          #  if [ "$PREV" != "}" ]; then
+          #    sed -i "${LINE}i\}" "$f"
+          #    echo "[FIXED] $f (before line $LINE)"
+          #  else
+          #    echo "[OK]    $f"
+          #  fi
+          #done
           
           make -j$(nproc) CC="$CC" CXX="$CXX" \
             CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" \
