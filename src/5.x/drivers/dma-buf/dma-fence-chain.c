@@ -256,3 +256,4 @@ void dma_fence_chain_init(struct dma_fence_chain *chain,
 		       &chain->lock, context, seqno);
 }
 EXPORT_SYMBOL(dma_fence_chain_init);
+MODULE_LICENSE("GPL v2");
