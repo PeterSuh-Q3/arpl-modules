@@ -183,12 +183,17 @@ jobs:
           
           cd /source/input
 
-          # ── 핵심 수정 부분 시작 ─────────────────────────────────────
-          # 1. 빌드 아티팩트 완전 정리 (Module.symvers 포함)
-          make -C "${KSRC}" M="${PWD}" clean 2>/dev/null || true
-          # glob 대신 find 로 재귀 정리
-          find "${PWD}" \( -name "*.o" -o -name "*.mod.c" -o -name ".*.cmd" \
-            -o -name "Module.symvers" -o -name "modules.order" \) -delete
+          # 전체 외부 모듈 클린
+          make -C "$KSRC" M="$PWD" clean 2>/dev/null || true
+          
+          # 잔여 아티팩트 확실 제거
+          find "$PWD" \( \
+            -name "*.o" -o -name "*.mod.c" -o -name ".*.cmd" \
+            -o -name "Module.symvers" -o -name "modules.order" \
+          \) -delete
+          
+          # dma-buf 서브트리 추가 보강 클린 (이번 이슈 핵심)
+          find "$PWD/drivers/dma-buf" -name "*.o" -delete
 
           # ── 수정된 심볼 처리 ──────────────────────────────────
           # KBUILD_EXTRA_SYMBOLS 를 사용하지 않는다.
