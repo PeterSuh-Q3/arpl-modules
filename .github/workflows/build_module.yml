@@ -204,7 +204,6 @@ jobs:
           FILES=(
             "drivers/dma-buf/dma-fence-array.c"
             "drivers/dma-buf/dma-fence-chain.c"
-            "drivers/dma-buf/dma-resv.c"
             "drivers/dma-buf/dma-heap.c"
             "drivers/dma-buf/st-dma-fence-chain.c"
             "drivers/dma-buf/st-dma-fence.c"
