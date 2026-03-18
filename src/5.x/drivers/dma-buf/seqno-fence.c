@@ -69,7 +69,3 @@ const struct dma_fence_ops seqno_fence_ops = {
 	.release = seqno_release,
 };
 EXPORT_SYMBOL(seqno_fence_ops);
-
-MODULE_AUTHOR("Thomas Hellstrom <thomas.hellstrom@intel.com>");
-MODULE_DESCRIPTION("DMA reservation object implementation");
-MODULE_LICENSE("GPL v2");
