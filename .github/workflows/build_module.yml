@@ -159,6 +159,8 @@ jobs:
           ROOT_PATH=${{ github.workspace }}
           sudo chroot build_env/ds.${{ matrix.platform }}-${{ matrix.version }} << "EOF"
 
+          [ -z "${KVER}" ] && KVER=$(grep 'KVER=' /env${BUILD_ARCH}.mak | cut -d= -f2)
+
           # 환경변수 설정
           sed -i 's/^CFLAGS=/#CFLAGS=/g; s/^CXXFLAGS=/#CXXFLAGS=/g' /env${BUILD_ARCH}.mak
           
@@ -172,6 +174,7 @@ jobs:
           cd /source/input
           [ -z "`grep 'env.mak' Makefile`" ] && sed -i '1 i include /env.mak' Makefile
 
+          PARMS=""
           if [ -f "defines.${{ matrix.platform }}" ]; then
             PARMS+=" `cat "defines.${{ matrix.platform }}" | xargs`"
           else
@@ -183,7 +186,9 @@ jobs:
           # ── 핵심 수정 부분 시작 ─────────────────────────────────────
           # 1. 빌드 아티팩트 완전 정리 (Module.symvers 포함)
           make -C "${KSRC}" M="${PWD}" clean 2>/dev/null || true
-          rm -f Module.symvers modules.order *.o *.mod.c .*.cmd
+          # glob 대신 find 로 재귀 정리
+          find "${PWD}" \( -name "*.o" -o -name "*.mod.c" -o -name ".*.cmd" \
+            -o -name "Module.symvers" -o -name "modules.order" \) -delete
 
           # ── 수정된 심볼 처리 ──────────────────────────────────
           # KBUILD_EXTRA_SYMBOLS 를 사용하지 않는다.
