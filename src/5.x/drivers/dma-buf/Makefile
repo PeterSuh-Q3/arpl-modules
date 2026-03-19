@@ -1,4 +1,8 @@
 # SPDX-License-Identifier: GPL-2.0-only
+
+# DSM external module build guard
+ifeq ($(KBUILD_EXTMOD),)
+
 obj-$(CONFIG_DMA_SHARED_BUFFER) := dma-buf.o dma-fence.o dma-fence-array.o dma-fence-chain.o \
 	 dma-resv.o seqno-fence.o
 obj-$(CONFIG_DMABUF_HEAPS)	+= dma-heap.o
@@ -13,3 +17,7 @@ dmabuf_selftests-y := \
 	st-dma-fence-chain.o
 
 obj-$(CONFIG_DMABUF_SELFTESTS)	+= dmabuf_selftests.o
+
+else
+$(info Skipping dma-buf external module build on DSM)
+endif
