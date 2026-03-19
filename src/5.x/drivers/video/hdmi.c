@@ -1904,3 +1904,5 @@ int hdmi_infoframe_unpack(union hdmi_infoframe *frame,
 	return ret;
 }
 EXPORT_SYMBOL(hdmi_infoframe_unpack);
+
+MODULE_LICENSE("GPL v2");
