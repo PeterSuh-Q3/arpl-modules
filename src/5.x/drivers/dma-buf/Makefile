@@ -3,9 +3,7 @@
 
 # Skip dma-buf when building external modules (DSM policy)
 ifneq ($(KBUILD_EXTMOD),)
-
 $(info Skipping dma-buf external module build on DSM)
-
 else
 
 obj-$(CONFIG_DMA_SHARED_BUFFER) := dma-buf.o dma-fence.o dma-fence-array.o dma-fence-chain.o \
