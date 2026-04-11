@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
-obj-$(CONFIG_DMA_SHARED_BUFFER) += dmabuf.o
+obj-m += dmabuf.o
 
 dmabuf-$(CONFIG_DMA_SHARED_BUFFER) := dma-buf.o dma-fence.o dma-fence-array.o dma-fence-chain.o \
 	 dma-resv.o seqno-fence.o
