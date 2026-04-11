@@ -17,7 +17,7 @@ while read PLATFORM KVER TOOLKIT_VER; do
   [ ! -d "${PWD}/${DIR}" ] && continue
 
   mkdir -p "/tmp/${PLATFORM}-${KVER}"
-  docker run -u `id -u` --rm -t -v "${PWD}/${DIR}":/input -v "/tmp/${PLATFORM}-${KVER}":/output \
+  docker run --privileged -u `id -u` --rm -t -v "${PWD}/${DIR}":/input -v "/tmp/${PLATFORM}-${KVER}":/output \
     dante90/syno-compiler:${TOOLKIT_VER} compile-module ${PLATFORM}
   for M in `ls /tmp/${PLATFORM}-${KVER}`; do
     PLATFORM_DIR="${PLATFORM}-${TOOLKIT_VER}-${KVER}"

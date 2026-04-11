@@ -21,7 +21,7 @@ while read PLATFORM KVER; do
   runparam=$(echo "-u `id -u` --rm -t -v "${PWD}/${DIR}":/input -v "/tmp/${PLATFORM}-${KVER}":/output \
     fbelavenuto/syno-compiler:${TOOLKIT_VER} compile-module ${PLATFORM}")
   echo $runparam  
-  docker run -u `id -u` --rm -t -v "${PWD}/${DIR}":/input -v "/tmp/${PLATFORM}-${KVER}":/output \
+  docker run --privileged -u `id -u` --rm -t -v "${PWD}/${DIR}":/input -v "/tmp/${PLATFORM}-${KVER}":/output \
     fbelavenuto/syno-compiler:${TOOLKIT_VER} compile-module ${PLATFORM}
   for M in `ls /tmp/${PLATFORM}-${KVER}`; do
       if [ "${PLATFORM}" = "epyc7002" ]; then

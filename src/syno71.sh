@@ -16,7 +16,7 @@ DIR="${KVER:0:1}.x"
 
 mkdir -p "/tmp/${PLATFORM}-${KVER}"
 
-docker run -u `id -u` --rm -t -v "${PWD}/${DIR}":/input -v "/tmp/${PLATFORM}-${KVER}":/output \
+docker run --privileged -u `id -u` --rm -t -v "${PWD}/${DIR}":/input -v "/tmp/${PLATFORM}-${KVER}":/output \
   dante90/syno-compiler:${TOOLKIT_VER} compile-module ${PLATFORM}
 
 # 출력 디렉터리 생성
