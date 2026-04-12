@@ -15814,7 +15814,7 @@ static struct scsi_host_template mpt2sas_driver_template = {
 #if defined(MY_ABC_HERE)
     .syno_port_type					= SYNO_PORT_TYPE_SATA,
 #ifdef MY_ABC_HERE
-	.syno_info_enum		= syno_mptNsas_info_enum,
+	.syno_sdev_info_enum		= syno_mptNsas_info_enum,
 #endif /* MY_ABC_HERE */
 #endif /* MY_ABC_HERE */
 #endif
@@ -15891,7 +15891,7 @@ static struct scsi_host_template mpt3sas_driver_template = {
 #if defined(MY_ABC_HERE)
     .syno_port_type					= SYNO_PORT_TYPE_SATA,
 #ifdef MY_ABC_HERE
-	.syno_info_enum		= syno_mptNsas_info_enum,
+	.syno_sdev_info_enum		= syno_mptNsas_info_enum,
 #endif /* MY_ABC_HERE */
 #endif /* MY_ABC_HERE */
 #endif
