@@ -15732,7 +15732,7 @@ static void syno_mptNsas_info_enum(struct scsi_device *sdev)
 	                                     sizeof(pcie_path));
 	if (ret != -1) {
 		snprintf(sdev->syno_block_info, BLOCK_INFO_SIZE,
-			 "%spciepath=%s;",
+			 "%spciepath=%s\n",
 			 sdev->syno_block_info, pcie_path);
 		/*
 		 * ata_port_no: binary shows sdev+0x70 used as uint.
@@ -15740,19 +15740,19 @@ static void syno_mptNsas_info_enum(struct scsi_device *sdev)
 		 * in DSM 5.10.55 kernel headers.
 		 */
 		snprintf(sdev->syno_block_info, BLOCK_INFO_SIZE,
-			 "%sata_port_no=%u;",
+			 "%sata_port_no=%u\n",
 			 sdev->syno_block_info,
 			 (unsigned int)sdev->id);
 		snprintf(sdev->syno_block_info, BLOCK_INFO_SIZE,
-			 "%sdriver=%s;",
+			 "%sdriver=%s\n",
 			 sdev->syno_block_info,
-			 sdev->host->hostt->name);
-	} else if (sdev->host->hostt && sdev->host->hostt->name) {
+			 "ahci");
+	} else {
 		snprintf(sdev->syno_block_info, BLOCK_INFO_SIZE,
-			 "%spciepath=;ata_port_no=%u;driver=%s;",
+			 "%spciepath=\nata_port_no=%u\ndriver=%s\n",
 			 sdev->syno_block_info,
 			 (unsigned int)sdev->id,
-			 sdev->host->hostt->name);
+			 "ahci");
 	}
 }
 #endif /* MY_ABC_HERE */
