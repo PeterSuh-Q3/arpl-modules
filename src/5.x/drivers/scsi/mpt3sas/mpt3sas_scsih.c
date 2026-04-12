@@ -15750,7 +15750,7 @@ static struct scsi_host_template mpt2sas_driver_template = {
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3,19,0))
 	.track_queue_depth              = 1,
 #if defined(MY_ABC_HERE)
-    .syno_port_type					= SYNO_PORT_TYPE_SAS,
+    .syno_port_type					= SYNO_PORT_TYPE_SATA,
 #endif /* MY_ABC_HERE */
 #endif
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3,16,0))
@@ -15824,7 +15824,7 @@ static struct scsi_host_template mpt3sas_driver_template = {
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3,19,0))
 	.track_queue_depth              = 1,
 #if defined(MY_ABC_HERE)
-    .syno_port_type					= SYNO_PORT_TYPE_SAS,
+    .syno_port_type					= SYNO_PORT_TYPE_SATA,
 #endif /* MY_ABC_HERE */
 #endif
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3,16,0))
