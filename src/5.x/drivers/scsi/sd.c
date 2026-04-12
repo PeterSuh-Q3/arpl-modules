@@ -179,10 +179,8 @@ static DEFINE_IDA(sata_index_ida);
 #ifdef MY_ABC_HERE
 static DEFINE_IDA(iscsi_index_ida);
 #endif
-#ifdef MY_ABC_HERE
-static DEFINE_IDA(sas_index_ida);
-#endif /* MY_ABC_HERE */
 #ifdef MY_DEF_HERE
+static DEFINE_IDA(sas_index_ida);
 extern int g_is_sas_model;
 #endif /* MY_DEF_HERE */
 #endif /* MY_ABC_HERE */
@@ -3962,12 +3960,12 @@ static SYNO_DISK_TYPE syno_disk_type_get(struct scsi_device *sdp)
 		return SYNO_DISK_SATA;
 	}
 
-#ifdef MY_ABC_HERE
+#ifdef MY_DEF_HERE
 	//sas disks
 	if (SYNO_PORT_TYPE_SAS == sdp->host->hostt->syno_port_type) {
 		return SYNO_DISK_SAS;
 	}
-#endif /* MY_ABC_HERE */
+#endif /* MY_DEF_HERE */
 
 	return SYNO_DISK_UNKNOWN;
 }
@@ -4059,12 +4057,12 @@ static int syno_sd_format_disk_name(struct scsi_device *sdp, struct scsi_disk *s
 			syno_disk_type_prefix = CONFIG_SYNO_ISCSI_DEVICE_PREFIX;
 			break;
 #endif /* MY_ABC_HERE */
-#ifdef MY_ABC_HERE
+#ifdef MY_DEF_HERE
 		case SYNO_DISK_SAS:
 			syno_disk_type_ida = &sas_index_ida;
 			syno_disk_type_prefix = CONFIG_SYNO_SAS_DEVICE_PREFIX;
 			break;
-#endif /* MY_ABC_HERE */
+#endif /* MY_DEF_HERE */
 #ifdef CONFIG_SYNO_VIRTIO_SCSI_DEVICE
 		case SYNO_DISK_VIRTIO_SCSI:
 			syno_disk_type_ida = &sata_index_ida;
@@ -4123,11 +4121,11 @@ static void syno_ida_free(struct scsi_disk *sdkp)
 		case SYNO_DISK_SATA:
 			ida_free(&sata_index_ida, sdkp->synoindex);
 			break;
-#ifdef MY_ABC_HERE
+#ifdef MY_DEF_HERE
 		case SYNO_DISK_SAS:
 			ida_free(&sas_index_ida, sdkp->synoindex);
 			break;
-#endif /* MY_ABC_HERE */
+#endif /* MY_DEF_HERE */
 
 		default:
 			break;
