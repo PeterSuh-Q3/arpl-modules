@@ -5,3 +5,4 @@ test.sh
 *.mod.*
 .tmp_versions
 /src/**/*.ko
+/src/.claude
