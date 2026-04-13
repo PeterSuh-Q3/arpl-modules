@@ -7,7 +7,7 @@ TOOLKIT_VER="7.2"
 #if [ -f ../../arpl/PLATFORMS ]; then
 #  cp ../../arpl/PLATFORMS PLATFORMS
 #else
-#  curl -sLO "https://github.com/fbelavenuto/arpl/raw/main/PLATFORMS"
+#  curl -sLO "https://github.com/dante90/arpl/raw/main/PLATFORMS"
 #fi
 
 echo -e "Compiling modules..."
@@ -17,12 +17,12 @@ while read PLATFORM KVER; do
   [ ! -d "${PWD}/${DIR}" ] && continue
   mkdir -p "/tmp/${PLATFORM}-${KVER}"
   #docker run --rm -t -v "${PWD}/${1}/${DIR}":/input -v "${PWD}/../${PLATFORM}-${KVER}":/output \
-  #  fbelavenuto/syno-toolkit:${PLATFORM}-${TOOLKIT_VER} compile-module
+  #  dante90/syno-toolkit:${PLATFORM}-${TOOLKIT_VER} compile-module
   runparam=$(echo "-u `id -u` --rm -t -v "${PWD}/${DIR}":/input -v "/tmp/${PLATFORM}-${KVER}":/output \
-    fbelavenuto/syno-compiler:${TOOLKIT_VER} compile-module ${PLATFORM}")
+    dante90/syno-compiler:${TOOLKIT_VER} compile-module ${PLATFORM}")
   echo $runparam  
   docker run --privileged -u `id -u` --rm -t -v "${PWD}/${DIR}":/input -v "/tmp/${PLATFORM}-${KVER}":/output \
-    fbelavenuto/syno-compiler:${TOOLKIT_VER} compile-module ${PLATFORM}
+    dante90/syno-compiler:${TOOLKIT_VER} compile-module ${PLATFORM}
   for M in `ls /tmp/${PLATFORM}-${KVER}`; do
       if [ "${PLATFORM}" = "epyc7002" ]; then
         PLATFORM_DIR="${PLATFORM}-${TOOLKIT_VER}-${KVER}"
