@@ -21,7 +21,7 @@
 
 obj-$(CONFIG_SCSI)		+= scsi_mod.o
 
-obj-$(CONFIG_RAID_ATTRS)	+= raid_class.o
+obj-m	+= raid_class.o
 
 # --- NOTE ORDERING HERE ---
 # For kernel non-modular link, transport attributes need to
@@ -30,7 +30,7 @@ obj-$(CONFIG_RAID_ATTRS)	+= raid_class.o
 obj-y	+= scsi_transport_spi/
 #obj-m	+= scsi_transport_fc/
 #obj-$(CONFIG_SCSI_ISCSI_ATTRS)	+= scsi_transport_iscsi.o
-obj-y	+= scsi_transport_sas/
+obj-m	+= scsi_transport_sas/
 obj-y	+= libsas/
 #obj-$(CONFIG_SCSI_SRP_ATTRS)	+= scsi_transport_srp.o
 #obj-$(CONFIG_SCSI_DH)		+= device_handler/
