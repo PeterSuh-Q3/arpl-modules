@@ -1,0 +1,224 @@
+name: Update SHA256 from Latest Release
+
+on:
+  # 신규 릴리즈가 publish 될 때 자동 실행
+  release:
+    types: [published]
+
+  # 수동 실행도 허용
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: '갱신할 릴리즈 태그 (비워두면 latest 사용)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write  # JSON 파일 커밋을 위해 필요
+
+jobs:
+  update-sha256:
+    runs-on: ubuntu-latest
+
+    steps:
+      # ------------------------------------------------------------------ #
+      # 1. 소스 체크아웃
+      # ------------------------------------------------------------------ #
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # ------------------------------------------------------------------ #
+      # 2. 대상 릴리즈 태그 결정
+      #    - release 이벤트 → github.event.release.tag_name
+      #    - workflow_dispatch + 태그 입력 → inputs.release_tag
+      #    - workflow_dispatch + 태그 미입력 → GitHub API로 latest 조회
+      # ------------------------------------------------------------------ #
+      - name: Determine target release tag
+        id: get_tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            TAG="${{ github.event.release.tag_name }}"
+          elif [ -n "${{ inputs.release_tag }}" ]; then
+            TAG="${{ inputs.release_tag }}"
+          else
+            TAG=$(gh release view --repo "${{ github.repository }}" --json tagName -q '.tagName')
+          fi
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "대상 릴리즈 태그: ${TAG}"
+
+      # ------------------------------------------------------------------ #
+      # 3. 릴리즈 asset 목록 + digest 파일 다운로드
+      #    asset 이름 패턴: {platform}-{dsm_ver}-{kernel_ver}.tgz
+      #    (firmware.tgz, install.sh 등 비-플랫폼 파일은 제외)
+      # ------------------------------------------------------------------ #
+      - name: Download release assets and compute SHA256
+        id: sha256_map
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.get_tag.outputs.tag }}
+        run: |
+          set -euo pipefail
+
+          REPO="${{ github.repository }}"
+          WORK_DIR="$(mktemp -d)"
+          SHA256_MAP="${WORK_DIR}/sha256_map.json"
+
+          echo "{}" > "${SHA256_MAP}"
+
+          echo "=== 릴리즈 asset 목록 조회: ${TAG} ==="
+
+          # asset 이름 목록 가져오기
+          ASSETS=$(gh release view "${TAG}" \
+            --repo "${REPO}" \
+            --json assets \
+            -q '.assets[].name')
+
+          echo "전체 asset 목록:"
+          echo "${ASSETS}"
+
+          # 플랫폼 tgz 파일만 필터링
+          # 패턴: 영문+숫자 로 된 플랫폼명-DSM버전-커널버전.tgz
+          # 예: apollolake-7.2-4.4.302.tgz, broadwellnk-7.1-4.4.180+13.tgz
+          # 제외: firmware.tgz (플랫폼-DSM 패턴이 아님)
+          PLATFORM_ASSETS=$(echo "${ASSETS}" | grep -E '^[a-z0-9]+-[0-9]+\.[0-9]+-[0-9]+\.' || true)
+
+          if [ -z "${PLATFORM_ASSETS}" ]; then
+            echo "::warning::플랫폼 tgz asset을 찾지 못했습니다."
+            exit 0
+          fi
+
+          echo ""
+          echo "=== 플랫폼 tgz asset 처리 ==="
+
+          # 각 asset 다운로드 후 sha256 계산
+          while IFS= read -r ASSET_NAME; do
+            [ -z "${ASSET_NAME}" ] && continue
+
+            echo "처리 중: ${ASSET_NAME}"
+
+            # 다운로드
+            DEST="${WORK_DIR}/${ASSET_NAME}"
+            gh release download "${TAG}" \
+              --repo "${REPO}" \
+              --pattern "${ASSET_NAME}" \
+              --dir "${WORK_DIR}" \
+              --clobber
+
+            # sha256 계산
+            SHA256=$(sha256sum "${DEST}" | awk '{print $1}')
+            echo "  SHA256: ${SHA256}"
+
+            # JSON 맵에 추가 (키: asset 파일명)
+            SHA256_MAP_TMP=$(jq \
+              --arg name "${ASSET_NAME}" \
+              --arg hash "${SHA256}" \
+              '. + {($name): $hash}' \
+              "${SHA256_MAP}")
+            echo "${SHA256_MAP_TMP}" > "${SHA256_MAP}"
+
+            rm -f "${DEST}"
+          done <<< "${PLATFORM_ASSETS}"
+
+          echo "sha256_map_file=${SHA256_MAP}" >> "$GITHUB_OUTPUT"
+          echo ""
+          echo "=== SHA256 맵 ==="
+          cat "${SHA256_MAP}"
+
+      # ------------------------------------------------------------------ #
+      # 4. JSON 파일의 sha256 값 갱신
+      #    - 워크스페이스 루트의 {platform}-{dsm_ver}.json 파일을 스캔
+      #    - files[] 중 name이 {platform}-{dsm_ver}-{kernel_ver}.tgz 인 항목만 갱신
+      # ------------------------------------------------------------------ #
+      - name: Update sha256 in JSON files
+        id: update_json
+        env:
+          SHA256_MAP_FILE: ${{ steps.sha256_map.outputs.sha256_map_file }}
+          TAG: ${{ steps.get_tag.outputs.tag }}
+        run: |
+          set -euo pipefail
+
+          CHANGED_FILES=()
+
+          # 루트의 {platform}-{dsm_ver}.json 파일 순회
+          # 예: apollolake-7.2.json, broadwellnk-7.1.json, ...
+          for JSON_FILE in *.json; do
+            # platform-X.Y.json 패턴인지 확인 (rpext-index.json 등 제외)
+            if ! echo "${JSON_FILE}" | grep -qE '^[a-z0-9]+-[0-9]+\.[0-9]+\.json$'; then
+              echo "건너뜀 (패턴 불일치): ${JSON_FILE}"
+              continue
+            fi
+
+            # files[] 배열에서 name이 .tgz 로 끝나고 sha256_map에 있는 항목 갱신
+            UPDATED=$(jq \
+              --slurpfile sha_map "${SHA256_MAP_FILE}" \
+              --arg release_tag "${TAG}" \
+              '
+              .files |= map(
+                if (.name | test("\\.tgz$")) and ($sha_map[0] | has(.name)) then
+                  .sha256 = $sha_map[0][.name] |
+                  .url = (
+                    "https://github.com/${{ github.repository }}/releases/download/"
+                    + $release_tag + "/" + .name
+                  )
+                else
+                  .
+                end
+              )
+              ' "${JSON_FILE}")
+
+            # 변경이 있을 때만 파일 덮어쓰기
+            CURRENT=$(cat "${JSON_FILE}")
+            if [ "${CURRENT}" != "${UPDATED}" ]; then
+              echo "${UPDATED}" | jq '.' > "${JSON_FILE}"
+              echo "  업데이트됨: ${JSON_FILE}"
+              CHANGED_FILES+=("${JSON_FILE}")
+            else
+              echo "  변경 없음: ${JSON_FILE}"
+            fi
+          done
+
+          if [ ${#CHANGED_FILES[@]} -eq 0 ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "changed_list=" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            # 공백 구분 리스트
+            echo "changed_list=${CHANGED_FILES[*]}" >> "$GITHUB_OUTPUT"
+          fi
+
+      # ------------------------------------------------------------------ #
+      # 5. 변경된 JSON 파일 커밋 & 푸시
+      # ------------------------------------------------------------------ #
+      - name: Commit and push updated JSON files
+        if: steps.update_json.outputs.changed == 'true'
+        env:
+          TAG: ${{ steps.get_tag.outputs.tag }}
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # 변경된 파일만 스테이징
+          for F in ${{ steps.update_json.outputs.changed_list }}; do
+            git add "${F}"
+          done
+
+          git commit -m "chore: update sha256 for release ${TAG}
+
+          Updated files:
+          ${{ steps.update_json.outputs.changed_list }}
+
+          Source: https://github.com/${{ github.repository }}/releases/tag/${TAG}"
+
+          git push
+
+      # ------------------------------------------------------------------ #
+      # 6. 변경 없으면 알림
+      # ------------------------------------------------------------------ #
+      - name: No changes detected
+        if: steps.update_json.outputs.changed == 'false'
+        run: |
+          echo "모든 JSON 파일의 sha256 값이 이미 최신 상태입니다."
