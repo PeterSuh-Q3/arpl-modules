@@ -1,0 +1,27 @@
+{
+  "mod_version": "v1",
+  "files": [
+    {
+      "name": "broadwell-7.2-4.4.302.tgz",
+      "url": "https://github.com/PeterSuh-Q3/mshell-modules/releases/download/26.5.13/broadwell-7.2-4.4.302.tgz",
+      "sha256": "903298b3cd061dfb7176585df1c03529e015cdb6a3dfa429b62b752336061bc2",
+      "packed": false
+    },
+    {
+      "name": "firmware.tgz",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/master/all-modules/releases/firmware.tgz",
+      "sha256": "19e3bd79c9e4a60b309e50d379179a140c0743173996731c4633cb190fc8c814",
+      "packed": false
+    },
+    {
+      "name": "install.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/master/all-modules/src/install.sh",
+      "sha256": "7037ad3363d98f9cefbe94b7909b982e11f5fd2c1048cdbb655eb0643528a341",
+      "packed": false
+    }
+  ],
+  "scripts": {
+    "on_boot": "install.sh",
+    "on_os_load": "install.sh"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "mod_version": "v1",
+  "files": [
+    {
+      "name": "bromolow-7.0-3.10.108.tgz",
+      "url": "https://github.com/PeterSuh-Q3/mshell-modules/releases/download/26.5.13/bromolow-7.0-3.10.108.tgz",
+      "sha256": "5ba45b5b0c0e941a1761df66275f39d8773e2fc76b0497f6d5d4ea36cfea9a55",
+      "packed": false
+    },
+    {
+      "name": "firmware.tgz",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/master/all-modules/releases/firmware.tgz",
+      "sha256": "19e3bd79c9e4a60b309e50d379179a140c0743173996731c4633cb190fc8c814",
+      "packed": false
+    },
+    {
+      "name": "install.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/master/all-modules/src/install.sh",
+      "sha256": "7037ad3363d98f9cefbe94b7909b982e11f5fd2c1048cdbb655eb0643528a341",
+      "packed": false
+    }
+  ],
+  "scripts": {
+    "on_boot": "install.sh",
+    "on_os_load": "install.sh"
+  }
+}
