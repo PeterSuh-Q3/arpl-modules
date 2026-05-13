@@ -3,7 +3,7 @@
   "files": [
     {
       "name": "denverton-7.0-4.4.180.tgz",
-      "url": "https://github.com/PeterSuh-Q3/mshell-modules/releases/download/26.5.13/denverton-7.0-4.4.180.tgz",
+      "url": "https://github.com/PeterSuh-Q3/arpl-modules/releases/download/26.5.13/denverton-7.0-4.4.180.tgz",
       "sha256": "72e310e910c6182f67bfc435256644465d0312acecd013656e714ea838bb1bb7",
       "packed": false
     },

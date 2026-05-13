@@ -3,7 +3,7 @@
   "files": [
     {
       "name": "epyc7002-7.1-5.10.55.tgz",
-      "url": "https://github.com/PeterSuh-Q3/mshell-modules/releases/download/26.5.13/epyc7002-7.1-5.10.55.tgz",
+      "url": "https://github.com/PeterSuh-Q3/arpl-modules/releases/download/26.5.13/epyc7002-7.1-5.10.55.tgz",
       "sha256": "44c341aba8aad19cb55468f44855270b80d233a3463db9bd5c169f8291e7dd18",
       "packed": false
     },

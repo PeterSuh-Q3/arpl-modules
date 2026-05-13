@@ -3,7 +3,7 @@
   "files": [
     {
       "name": "v1000-6.2-4.4.59.tgz",
-      "url": "https://github.com/PeterSuh-Q3/mshell-modules/releases/download/26.5.13/v1000-6.2-4.4.59.tgz",
+      "url": "https://github.com/PeterSuh-Q3/arpl-modules/releases/download/26.5.13/v1000-6.2-4.4.59.tgz",
       "sha256": "2b313bb79905727dcbb89910bf15d8d7b0115d7e54ccb03c3e05774b2732da88",
       "packed": false
     },

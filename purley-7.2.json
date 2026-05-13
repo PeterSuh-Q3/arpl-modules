@@ -3,7 +3,7 @@
   "files": [
     {
       "name": "purley-7.2-4.4.302.tgz",
-      "url": "https://github.com/PeterSuh-Q3/mshell-modules/releases/download/26.5.13/purley-7.2-4.4.302.tgz",
+      "url": "https://github.com/PeterSuh-Q3/arpl-modules/releases/download/26.5.13/purley-7.2-4.4.302.tgz",
       "sha256": "444b356ecda6598e6a5121c9330211ed9c4536c583885fd0261b028798960bcb",
       "packed": false
     },

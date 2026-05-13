@@ -3,7 +3,7 @@
   "files": [
     {
       "name": "bromolow-7.3-3.10.108.tgz",
-      "url": "https://github.com/PeterSuh-Q3/mshell-modules/releases/download/26.5.13/bromolow-7.3-3.10.108.tgz",
+      "url": "https://github.com/PeterSuh-Q3/arpl-modules/releases/download/26.5.13/bromolow-7.3-3.10.108.tgz",
       "sha256": "c93d6d07d6f932dd1a47689cb816be5fb594a2affc0de02e8f676843c2adb8b3",
       "packed": false
     },

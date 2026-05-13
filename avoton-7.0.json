@@ -3,7 +3,7 @@
   "files": [
     {
       "name": "avoton-7.0-3.10.108.tgz",
-      "url": "https://github.com/PeterSuh-Q3/mshell-modules/releases/download/26.5.13/avoton-7.0-3.10.108.tgz",
+      "url": "https://github.com/PeterSuh-Q3/arpl-modules/releases/download/26.5.13/avoton-7.0-3.10.108.tgz",
       "sha256": "8f9a46d70fc66a530fab12ba40ec79e34beb6db6b0acb169a292579cf320af02",
       "packed": false
     },

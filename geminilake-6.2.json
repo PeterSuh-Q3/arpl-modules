@@ -3,7 +3,7 @@
   "files": [
     {
       "name": "geminilake-6.2-4.4.59.tgz",
-      "url": "https://github.com/PeterSuh-Q3/mshell-modules/releases/download/26.5.13/geminilake-6.2-4.4.59.tgz",
+      "url": "https://github.com/PeterSuh-Q3/arpl-modules/releases/download/26.5.13/geminilake-6.2-4.4.59.tgz",
       "sha256": "8e116d3b838e761622a76c3540772746f665b0738b5b0a516af31237e9a99269",
       "packed": false
     },

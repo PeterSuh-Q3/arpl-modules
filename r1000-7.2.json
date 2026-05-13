@@ -3,7 +3,7 @@
   "files": [
     {
       "name": "r1000-7.2-4.4.302.tgz",
-      "url": "https://github.com/PeterSuh-Q3/mshell-modules/releases/download/26.5.13/r1000-7.2-4.4.302.tgz",
+      "url": "https://github.com/PeterSuh-Q3/arpl-modules/releases/download/26.5.13/r1000-7.2-4.4.302.tgz",
       "sha256": "30b1d95dab636ddf7adc36af95e09138e39f0298bdcc05ac86a79bada86319d5",
       "packed": false
     },

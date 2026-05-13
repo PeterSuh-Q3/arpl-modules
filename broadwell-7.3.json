@@ -3,7 +3,7 @@
   "files": [
     {
       "name": "broadwell-7.3-4.4.302.tgz",
-      "url": "https://github.com/PeterSuh-Q3/mshell-modules/releases/download/26.5.13/broadwell-7.3-4.4.302.tgz",
+      "url": "https://github.com/PeterSuh-Q3/arpl-modules/releases/download/26.5.13/broadwell-7.3-4.4.302.tgz",
       "sha256": "ec9478c54293dd0c82d0d504a0e8ed39b2341683d9296cb8db2837c427a9deaf",
       "packed": false
     },
