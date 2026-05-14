@@ -3,8 +3,8 @@
   "files": [
     {
       "name": "geminilake-7.2-4.4.302.tgz",
-      "url": "https://github.com/PeterSuh-Q3/arpl-modules/releases/download/26.5.13/geminilake-7.2-4.4.302.tgz",
-      "sha256": "dc5c958999a4b4f054efec2859076469b99312addb50be73c0f3b15787a6e488",
+      "url": "https://github.com/PeterSuh-Q3/arpl-modules/releases/download/26.5.15/geminilake-7.2-4.4.302.tgz",
+      "sha256": "670349a9862aedad50094862fbcd157f7e02e77bd888fe570a61d9a28496f3e3",
       "packed": false
     },
     {

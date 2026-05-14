@@ -3,8 +3,8 @@
   "files": [
     {
       "name": "purley-7.1-4.4.180.tgz",
-      "url": "https://github.com/PeterSuh-Q3/arpl-modules/releases/download/26.5.13/purley-7.1-4.4.180.tgz",
-      "sha256": "1fdaa42ec799ea439b3965cf595b21424f0d11ce5f5dbdbfe7e01c14ccce5a8e",
+      "url": "https://github.com/PeterSuh-Q3/arpl-modules/releases/download/26.5.15/purley-7.1-4.4.180.tgz",
+      "sha256": "100a7d6fd625f5284f50f7ea578195ba710c0d33e2bfe4f54c3cbcc445635651",
       "packed": false
     },
     {

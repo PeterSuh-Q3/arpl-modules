@@ -3,8 +3,8 @@
   "files": [
     {
       "name": "r1000nk-7.3-5.10.55.tgz",
-      "url": "https://github.com/PeterSuh-Q3/arpl-modules/releases/download/26.5.13/r1000nk-7.3-5.10.55.tgz",
-      "sha256": "89d14026e3f82cb3c5c4edc8e6caf5fe78c25428b1fa6c2944678493facdc251",
+      "url": "https://github.com/PeterSuh-Q3/arpl-modules/releases/download/26.5.15/r1000nk-7.3-5.10.55.tgz",
+      "sha256": "fb6f8ecd2382c8215bdf5b324026005ddea78578f8f9d2d79c77a3da9c38a442",
       "packed": false
     },
     {

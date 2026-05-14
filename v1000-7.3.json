@@ -3,8 +3,8 @@
   "files": [
     {
       "name": "v1000-7.3-4.4.302.tgz",
-      "url": "https://github.com/PeterSuh-Q3/arpl-modules/releases/download/26.5.13/v1000-7.3-4.4.302.tgz",
-      "sha256": "ce466e5e6bd7c29a4e6ae747c097ff0720ade2a44ced19e659bc09ec490d1e67",
+      "url": "https://github.com/PeterSuh-Q3/arpl-modules/releases/download/26.5.15/v1000-7.3-4.4.302.tgz",
+      "sha256": "ec2cf19f56086d92ba50e7af5ade10eaca8c4eeb2b1a27a3a335e30b8ae2ca28",
       "packed": false
     },
     {

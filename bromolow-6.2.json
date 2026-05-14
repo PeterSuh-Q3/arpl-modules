@@ -3,8 +3,8 @@
   "files": [
     {
       "name": "bromolow-6.2-3.10.105.tgz",
-      "url": "https://github.com/PeterSuh-Q3/arpl-modules/releases/download/26.5.13/bromolow-6.2-3.10.105.tgz",
-      "sha256": "7cb7254904560158fcdfdd7b656668757f424d4ce3162dca415dac531e8592b9",
+      "url": "https://github.com/PeterSuh-Q3/arpl-modules/releases/download/26.5.15/bromolow-6.2-3.10.105.tgz",
+      "sha256": "662584d26aedead0d2ece7bb711c5807a3b8b4e98e91e2e0566345c861d8d348",
       "packed": false
     },
     {

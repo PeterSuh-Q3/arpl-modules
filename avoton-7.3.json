@@ -3,8 +3,8 @@
   "files": [
     {
       "name": "avoton-7.3-3.10.108.tgz",
-      "url": "https://github.com/PeterSuh-Q3/arpl-modules/releases/download/26.5.13/avoton-7.3-3.10.108.tgz",
-      "sha256": "f6c693670c9a146f3e4e39e7e51c53730aff0e1a11cd039cf6284d0f1fb6e31b",
+      "url": "https://github.com/PeterSuh-Q3/arpl-modules/releases/download/26.5.15/avoton-7.3-3.10.108.tgz",
+      "sha256": "fe16c6fe05e348613b1670d7f57991a276ca03a7044ce17177a691610769de12",
       "packed": false
     },
     {

@@ -3,8 +3,8 @@
   "files": [
     {
       "name": "broadwellnkv2-7.3-4.4.302.tgz",
-      "url": "https://github.com/PeterSuh-Q3/arpl-modules/releases/download/26.5.13/broadwellnkv2-7.3-4.4.302.tgz",
-      "sha256": "1e61a0b60e6a7d7785415a8b1c8636dfd1f0a717dc1a40f08419f97851fbbac1",
+      "url": "https://github.com/PeterSuh-Q3/arpl-modules/releases/download/26.5.15/broadwellnkv2-7.3-4.4.302.tgz",
+      "sha256": "69b50e15ff27a9f013456b06384d2ff9fb28ca4c867466e20d686b0da7e49e26",
       "packed": false
     },
     {
