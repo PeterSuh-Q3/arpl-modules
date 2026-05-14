@@ -51,11 +51,17 @@ jobs:
           echo "대상 릴리즈 태그: ${TAG}"
 
       # ------------------------------------------------------------------ #
-      # 3. 릴리즈 asset 목록 + digest 파일 다운로드
-      #    asset 이름 패턴: {platform}-{dsm_ver}-{kernel_ver}.tgz
-      #    (firmware.tgz, install.sh 등 비-플랫폼 파일은 제외)
+      # 3. 릴리즈 asset 중 files-chksum 파일만 다운로드하여 sha256 맵 생성
+      #    files-chksum 형식 (공백 구분 3열):
+      #      <sha256hex>  <파일명>  <체크섬파일명>
+      #    예:
+      #      8a7d9870...  apollolake-7.2-4.4.302.tgz  modpack.sha256
+      #      9cbf4506...  firmware.tgz                 firmware.sha256
+      #
+      #    이 중 {플랫폼}-{DSM버전}-{커널버전}.tgz 행만 추출하여 JSON 맵으로 변환
+      #    → 실제 tgz 파일은 일절 다운로드하지 않음
       # ------------------------------------------------------------------ #
-      - name: Download release assets and compute SHA256
+      - name: Parse files-chksum and build SHA256 map
         id: sha256_map
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -65,67 +71,48 @@ jobs:
 
           REPO="${{ github.repository }}"
           WORK_DIR="$(mktemp -d)"
+          CHKSUM_FILE="${WORK_DIR}/files-chksum"
           SHA256_MAP="${WORK_DIR}/sha256_map.json"
 
           echo "{}" > "${SHA256_MAP}"
 
-          echo "=== 릴리즈 asset 목록 조회: ${TAG} ==="
-
-          # asset 이름 목록 가져오기
-          ASSETS=$(gh release view "${TAG}" \
+          echo "=== files-chksum 다운로드: ${TAG} ==="
+          gh release download "${TAG}" \
             --repo "${REPO}" \
-            --json assets \
-            -q '.assets[].name')
+            --pattern "files-chksum" \
+            --dir "${WORK_DIR}" \
+            --clobber
 
-          echo "전체 asset 목록:"
-          echo "${ASSETS}"
-
-          # 플랫폼 tgz 파일만 필터링
-          # 패턴: 영문+숫자 로 된 플랫폼명-DSM버전-커널버전.tgz
-          # 예: apollolake-7.2-4.4.302.tgz, broadwellnk-7.1-4.4.180+13.tgz
-          # 제외: firmware.tgz (플랫폼-DSM 패턴이 아님)
-          PLATFORM_ASSETS=$(echo "${ASSETS}" | grep -E '^[a-z0-9]+-[0-9]+\.[0-9]+-[0-9]+\.' || true)
-
-          if [ -z "${PLATFORM_ASSETS}" ]; then
-            echo "::warning::플랫폼 tgz asset을 찾지 못했습니다."
-            exit 0
-          fi
-
+          echo "=== files-chksum 내용 ==="
+          cat "${CHKSUM_FILE}"
           echo ""
-          echo "=== 플랫폼 tgz asset 처리 ==="
 
-          # 각 asset 다운로드 후 sha256 계산
-          while IFS= read -r ASSET_NAME; do
-            [ -z "${ASSET_NAME}" ] && continue
+          echo "=== 플랫폼 tgz 행 파싱 ==="
+          # 패턴: {플랫폼}-{DSM버전}-{커널버전}.tgz 행만 추출
+          # 예: apollolake-7.2-4.4.302.tgz  /  broadwellnk-7.1-4.4.180.tgz
+          # 제외: firmware.tgz, firmwarei915.tgz 등 (플랫폼-X.Y- 패턴이 아닌 것)
+          while IFS=' ' read -r SHA256 FILENAME _REST; do
+            [ -z "${SHA256}" ] || [ -z "${FILENAME}" ] && continue
 
-            echo "처리 중: ${ASSET_NAME}"
+            # 플랫폼 tgz 패턴: {소문자+숫자}-{숫자.숫자}-{숫자...}.tgz
+            if ! echo "${FILENAME}" | grep -qE '^[a-z0-9]+-[0-9]+\.[0-9]+-[0-9]+.*\.tgz$'; then
+              echo "  건너뜀: ${FILENAME}"
+              continue
+            fi
 
-            # 다운로드
-            DEST="${WORK_DIR}/${ASSET_NAME}"
-            gh release download "${TAG}" \
-              --repo "${REPO}" \
-              --pattern "${ASSET_NAME}" \
-              --dir "${WORK_DIR}" \
-              --clobber
+            echo "  등록: ${FILENAME} → ${SHA256}"
 
-            # sha256 계산
-            SHA256=$(sha256sum "${DEST}" | awk '{print $1}')
-            echo "  SHA256: ${SHA256}"
-
-            # JSON 맵에 추가 (키: asset 파일명)
             SHA256_MAP_TMP=$(jq \
-              --arg name "${ASSET_NAME}" \
+              --arg name "${FILENAME}" \
               --arg hash "${SHA256}" \
               '. + {($name): $hash}' \
               "${SHA256_MAP}")
             echo "${SHA256_MAP_TMP}" > "${SHA256_MAP}"
-
-            rm -f "${DEST}"
-          done <<< "${PLATFORM_ASSETS}"
+          done < "${CHKSUM_FILE}"
 
           echo "sha256_map_file=${SHA256_MAP}" >> "$GITHUB_OUTPUT"
           echo ""
-          echo "=== SHA256 맵 ==="
+          echo "=== 최종 SHA256 맵 ==="
           cat "${SHA256_MAP}"
 
       # ------------------------------------------------------------------ #
@@ -152,7 +139,7 @@ jobs:
               continue
             fi
 
-            # files[] 배열에서 name이 .tgz 로 끝나고 sha256_map에 있는 항목 갱신
+            # files[] 배열에서 name이 .tgz 로 끝나고 sha256_map에 있는 항목만 갱신
             UPDATED=$(jq \
               --slurpfile sha_map "${SHA256_MAP_FILE}" \
               --arg release_tag "${TAG}" \
