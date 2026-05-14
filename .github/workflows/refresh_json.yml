@@ -116,7 +116,31 @@ jobs:
           cat "${SHA256_MAP}"
 
       # ------------------------------------------------------------------ #
-      # 4. JSON 파일의 sha256 값 갱신
+      # 4. 갱신 대상 JSON 파일을 backup_json.zip 으로 백업
+      # ------------------------------------------------------------------ #
+      - name: Backup JSON files
+        run: |
+          set -euo pipefail
+
+          # {platform}-{dsm_ver}.json 패턴 파일만 zip 으로 묶음
+          BACKUP_LIST=()
+          for JSON_FILE in *.json; do
+            if echo "${JSON_FILE}" | grep -qE '^[a-z0-9]+-[0-9]+\.[0-9]+\.json$'; then
+              BACKUP_LIST+=("${JSON_FILE}")
+            fi
+          done
+
+          if [ ${#BACKUP_LIST[@]} -eq 0 ]; then
+            echo "::warning::백업할 JSON 파일이 없습니다."
+            exit 0
+          fi
+
+          zip backup_json.zip "${BACKUP_LIST[@]}"
+          echo "백업 완료: backup_json.zip (${#BACKUP_LIST[@]}개 파일)"
+          zipinfo -1 backup_json.zip
+
+      # ------------------------------------------------------------------ #
+      # 5. JSON 파일의 sha256 값 갱신
       #    - 워크스페이스 루트의 {platform}-{dsm_ver}.json 파일을 스캔
       #    - files[] 중 name이 {platform}-{dsm_ver}-{kernel_ver}.tgz 인 항목만 갱신
       # ------------------------------------------------------------------ #
@@ -197,10 +221,11 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # 변경된 파일만 스테이징
+          # 변경된 JSON 파일 및 백업 zip 스테이징
           for F in ${{ steps.update_json.outputs.changed_list }}; do
             git add "${F}"
           done
+          git add backup_json.zip
 
           git commit -m "chore: update sha256 for release ${TAG}
 
