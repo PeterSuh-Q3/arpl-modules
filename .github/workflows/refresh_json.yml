@@ -1,11 +1,7 @@
 name: Update SHA256 from Latest Release
 
 on:
-  # 신규 릴리즈가 publish 될 때 자동 실행
-  release:
-    types: [published]
-
-  # 수동 실행도 허용
+  # 수동 실행
   workflow_dispatch:
     inputs:
       release_tag:
