@@ -239,3 +239,14 @@ jobs:
         if: steps.update_json.outputs.changed == 'false'
         run: |
           echo "모든 JSON 파일의 sha256 값이 이미 최신 상태입니다."
+
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger other workflow
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          repository: PeterSuh-Q3/tcrp-modules
+          event-type: trigger-workflow
+          
