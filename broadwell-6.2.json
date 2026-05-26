@@ -3,8 +3,8 @@
   "files": [
     {
       "name": "broadwell-6.2-3.10.105.tgz",
-      "url": "https://github.com/PeterSuh-Q3/arpl-modules/releases/download/26.5.15/broadwell-6.2-3.10.105.tgz",
-      "sha256": "c3cbd9f846eb19ee560b1ff8c5e08b5e1d9460cf8c70b3ee84f7cc807b1b1b4d",
+      "url": "https://github.com/PeterSuh-Q3/arpl-modules/releases/download/26.5.26/broadwell-6.2-3.10.105.tgz",
+      "sha256": "24c36fee123843411e4b6a73857f60c17bb5049fb0195eb04e6cef57846b3133",
       "packed": false
     },
     {

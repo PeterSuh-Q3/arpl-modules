@@ -3,8 +3,8 @@
   "files": [
     {
       "name": "broadwell-7.2-4.4.302.tgz",
-      "url": "https://github.com/PeterSuh-Q3/arpl-modules/releases/download/26.5.15/broadwell-7.2-4.4.302.tgz",
-      "sha256": "1e6ee2608c2e624a2bb4880bfd71eca2c4a0b0fd84abf4d1a04613c3e21cfe63",
+      "url": "https://github.com/PeterSuh-Q3/arpl-modules/releases/download/26.5.26/broadwell-7.2-4.4.302.tgz",
+      "sha256": "30497ee930cf5955aaf0867257b425f92c9eeb9d8164cfbd6eebd3fea0b8c1c3",
       "packed": false
     },
     {
