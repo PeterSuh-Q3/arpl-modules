@@ -3,8 +3,8 @@
   "files": [
     {
       "name": "braswell-7.0-3.10.108.tgz",
-      "url": "https://github.com/PeterSuh-Q3/arpl-modules/releases/download/26.5.26/braswell-7.0-3.10.108.tgz",
-      "sha256": "04a43606027b37dd9af62abe330d1f08280a61ab152265ca6449e123a4bc23ff",
+      "url": "https://github.com/PeterSuh-Q3/arpl-modules/releases/download/26.5.27/braswell-7.0-3.10.108.tgz",
+      "sha256": "af677fe24500ca706f87701b845fce1c0e55d7ef8e07f3f5781df4193b13128a",
       "packed": false
     },
     {

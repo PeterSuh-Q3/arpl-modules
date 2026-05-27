@@ -3,8 +3,8 @@
   "files": [
     {
       "name": "r1000-7.1-4.4.180.tgz",
-      "url": "https://github.com/PeterSuh-Q3/arpl-modules/releases/download/26.5.26/r1000-7.1-4.4.180.tgz",
-      "sha256": "3d126a96c5a3eb17a56ab06cf0b643727548125fec0884647c0d026fbcd73cb2",
+      "url": "https://github.com/PeterSuh-Q3/arpl-modules/releases/download/26.5.27/r1000-7.1-4.4.180.tgz",
+      "sha256": "b313b945ef0c82b9950d5de1019de9db5a194b92e8eee92ca9cd720385112027",
       "packed": false
     },
     {
