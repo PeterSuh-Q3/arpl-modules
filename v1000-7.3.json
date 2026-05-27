@@ -18,6 +18,12 @@
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/master/all-modules/src/install.sh",
       "sha256": "7037ad3363d98f9cefbe94b7909b982e11f5fd2c1048cdbb655eb0643528a341",
       "packed": false
+    },
+    {
+      "name": "firmwarei915.tgz",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-modules/master/all-modules/releases/firmwarei915.tgz",
+      "sha256": "07b983c0f3c28582ee64a97d2fe85b8cf92b229f30e8571accbf8779d89c0a4d",
+      "packed": false
     }
   ],
   "scripts": {
